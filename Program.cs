@@ -8,7 +8,7 @@ namespace aoc2019
     {
         static void Main(string[] args)
         {
-            Console.WriteLine(new D32().Answer);
+            Console.WriteLine(new D41().Answer);
         }
     }
 }
