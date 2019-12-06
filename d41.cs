@@ -52,10 +52,10 @@ namespace aoc2019
             while (true)
             {
                 var opCode = memory[iptr];
+
                 var parameterModes = opCode.Length > 2 ? opCode.Substring(0, opCode.Length - 2) : "";
                 var firstParameterMode = parameterModes.Length > 0 ? parameterModes[parameterModes.Length - 1] == '1' ? ParameterMode.Immediate : ParameterMode.Positional : ParameterMode.Positional;
                 var secondParameterMode = parameterModes.Length > 1 ? parameterModes[parameterModes.Length - 2] == '1' ? ParameterMode.Immediate : ParameterMode.Positional : ParameterMode.Positional;
-                var thirdParameterMode = parameterModes.Length > 2 ? parameterModes[parameterModes.Length - 3] == '1' ? ParameterMode.Immediate : ParameterMode.Positional : ParameterMode.Positional;
 
                 if (opCode.EndsWith(OpCodeAdd))
                 {
