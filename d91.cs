@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 
 namespace aoc2019
 {
@@ -13,14 +14,14 @@ namespace aoc2019
         {
             get
             {
-                var instructions = File.ReadAllText("d9test.txt").Split(',');
+                var instructions = File.ReadAllText("d9.txt").Split(',').Select(p => BigInteger.Parse(p)).ToArray();
 
                 var inputs = new Queue<string>();
-                //inputs.Enqueue("0");
+                inputs.Enqueue("2");
 
                 var computer = new IntCodeComputer(instructions);
                 computer.RunWithInput(inputs);
-                return computer.Outputs.Last();
+                return string.Join(",", computer.Outputs);
             }
         }
 
@@ -37,12 +38,12 @@ namespace aoc2019
             private const string OpCodeRelativeBaseOffset = "09";
             private const string OpCodeBreak = "99";
 
-            private readonly string[] Memory;
-            private readonly Dictionary<string, int> BigMemory = new Dictionary<string, int>();
-            public readonly List<string> Outputs = new List<string>();
-            private int RelativeBaseAddress = 0;
+            private readonly BigInteger[] Memory;
+            private readonly Dictionary<BigInteger, BigInteger> BigMemory = new Dictionary<BigInteger, BigInteger>();
+            public readonly List<BigInteger> Outputs = new List<BigInteger>();
+            private BigInteger RelativeBaseAddress = 0;
 
-            public IntCodeComputer(string[] memory)
+            public IntCodeComputer(BigInteger[] memory)
             {
                 Memory = memory;
             }
@@ -69,9 +70,9 @@ namespace aoc2019
                 return modes;
             }
 
-            private void SetValueInMemory(int theValue, int address, ParameterMode mode)
+            private void SetValueInMemory(BigInteger theValue, BigInteger address, ParameterMode mode)
             {
-                int absoluteAddress = 0;
+                BigInteger absoluteAddress = 0;
                 switch (mode)
                 {
                     case ParameterMode.Relative:
@@ -80,18 +81,17 @@ namespace aoc2019
                         break;
                     case ParameterMode.Positional:
                     case ParameterMode.Immediate:
-                        //var relative = GetValueFromMemory(address, ParameterMode.Immediate);
                         absoluteAddress = GetValueFromMemory(address, ParameterMode.Immediate);
                         break;
                 }
                 Debug.Assert(absoluteAddress >= 0);
-                if (absoluteAddress >= Memory.Length) BigMemory[absoluteAddress.ToString()] = theValue;
-                else Memory[absoluteAddress] = theValue.ToString();
+                if (absoluteAddress >= Memory.Length) BigMemory[absoluteAddress] = theValue;
+                else Memory[(int)absoluteAddress] = theValue;
             }
 
-            private int GetValueFromMemory(int address, ParameterMode mode)
+            private BigInteger GetValueFromMemory(BigInteger address, ParameterMode mode)
             {
-                int absoluteAddress = 0;
+                BigInteger absoluteAddress = 0;
                 switch (mode)
                 {
                     case ParameterMode.Relative:
@@ -109,17 +109,17 @@ namespace aoc2019
                 }
                 Debug.Assert(absoluteAddress >= 0);
                 if (absoluteAddress >= Memory.Length)
-                    return BigMemory.ContainsKey(absoluteAddress.ToString()) ? BigMemory[absoluteAddress.ToString()] : 0;
+                    return BigMemory.ContainsKey(absoluteAddress) ? BigMemory[absoluteAddress] : 0;
                 else
-                    return Memory[absoluteAddress].AsInt();
+                    return Memory[(int)absoluteAddress];
             }
 
             public void RunWithInput(Queue<string> inputs)
             {
-                int iptr = 0;
+                BigInteger iptr = 0;
                 while (true)
                 {
-                    var opCode = Memory[iptr];
+                    var opCode = Memory[(int)iptr].ToString("D2");
 
                     var parameterModes = opCode.Length > 2 ? opCode.Substring(0, opCode.Length - 2) : "";
 
@@ -149,14 +149,14 @@ namespace aoc2019
                     {
                         var input = inputs.Dequeue();
                         var modes = ParseParameterModes(parameterModes, 1);
-                        SetValueInMemory(input.AsInt(), iptr + 3, modes[0]);
+                        SetValueInMemory(input.AsInt(), iptr + 1, modes[0]);
                         iptr += 2;
                     }
                     else if (opCode.EndsWith(OpCodeOutput))
                     {
                         var modes = ParseParameterModes(parameterModes, 1);
                         var output = GetValueFromMemory(iptr + 1, modes[0]);
-                        Outputs.Add(output.ToString());
+                        Outputs.Add(output);
                         iptr += 2;
                     }
                     else if (opCode.EndsWith(OpCodeJumpIfNotZero))
