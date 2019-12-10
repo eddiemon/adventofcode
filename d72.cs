@@ -21,7 +21,7 @@ namespace aoc2019
         private const string OpCodeEquals = "8";
         private const string OpCodeBreak = "99";
 
-        public async Task<string> Answer()
+        public string Answer()
         {
             var instructions = File.ReadAllText("d7.txt").Split(',');
 
@@ -132,7 +132,7 @@ namespace aoc2019
                     }
                     else if (opCode.EndsWith(OpCodeInput))
                     {
-                        while (stdIn.Count == 0) Thread.SpinWait(50);
+                        while (stdIn.Count == 0) ;
                         if (!stdIn.TryDequeue(out var input)) throw new Exception("Could not read from input");
 
                         var saveLocation = memory[iptr + 1].AsInt();
