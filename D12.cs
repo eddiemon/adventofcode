@@ -1,67 +1,57 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Numerics;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace aoc2019
 {
     public class D12
     {
-
         Moon[] moons = File.ReadAllLines("d12.txt").Select(l => Moon.FromString(l)).ToArray();
-
-        // Dictionary<Moon, HashSet<(Vector3, Vector3)>> Visited = new Dictionary<Moon, HashSet<(Vector3, Vector3)>>();
-        // HashSet<int> HasVisitedAllPosAndVel = new HashSet<int>();
-        // List<int> visited = new List<int>();
 
         public string Answer()
         {
             var sw = new Stopwatch();
             sw.Start();
-            long numSteps = 0;
-            var originalHash = (
-                moons[0].pos, moons[0].vel,
-                moons[1].pos, moons[1].vel,
-                moons[2].pos, moons[2].vel,
-                moons[3].pos, moons[3].vel
-            );
 
-            long lastNumSteps = 0;
-            while (true)
+            int numSteps = 0;
+            var originalX = new int[] { moons[0].pos.x, moons[1].pos.x, moons[2].pos.x, moons[3].pos.x };
+            var originalY = new int[] { moons[0].pos.y, moons[1].pos.y, moons[2].pos.y, moons[3].pos.y };
+            var originalZ = new int[] { moons[0].pos.z, moons[1].pos.z, moons[2].pos.z, moons[3].pos.z };
+            int xRepeat = 0, yRepeat = 0, zRepeat = 0;
+            while (xRepeat == 0 || yRepeat == 0 || zRepeat == 0)
             {
                 ApplyGravity();
                 UpdatePositions();
 
-                // var hash = GetHash(moons);
-                if (originalHash == (
-                    moons[0].pos, moons[0].vel,
-                    moons[1].pos, moons[1].vel,
-                    moons[2].pos, moons[2].vel,
-                    moons[3].pos, moons[3].vel
-                ))
-                    break;
+                if (xRepeat == 0 && axisRepeats(0, originalX))
+                 xRepeat = numSteps;
+                if (yRepeat == 0 && axisRepeats(1, originalY))
+                 yRepeat = numSteps;
+                if (zRepeat == 0 && axisRepeats(2, originalZ))
+                 zRepeat = numSteps;
 
-                // visited.Add(hash);
-                if (sw.ElapsedMilliseconds > 5000)
-                {
-                    sw.Restart();
-                    var diff = numSteps - lastNumSteps;
-                    System.Console.WriteLine($"Steps/s: {(diff / 5.0)}");
-                    lastNumSteps = numSteps;
-                }
                 numSteps++;
             }
             sw.Stop();
             System.Console.WriteLine(sw.ElapsedMilliseconds);
 
-            return numSteps.ToString();
+            return Maths.lcm(xRepeat + 1, Maths.lcm(yRepeat + 1, zRepeat + 1)).ToString();
+        }
+
+        private bool axisRepeats(int axis, int[] originalAxis)
+        {
+            int[] compareAxis = null;
+            if (axis == 0) compareAxis = new int[] { moons[0].pos.x, moons[1].pos.x, moons[2].pos.x, moons[3].pos.x };
+            else if (axis == 1) compareAxis = new int[] { moons[0].pos.y, moons[1].pos.y, moons[2].pos.y, moons[3].pos.y };
+            else if (axis == 2) compareAxis = new int[] { moons[0].pos.z, moons[1].pos.z, moons[2].pos.z, moons[3].pos.z };
+            for (int i = 0; i < 4; i++)
+            {
+                if (originalAxis[i] != compareAxis[i]) return false;
+            }
+            return true;
         }
 
         private int GetHash(Moon m)
