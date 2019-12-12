@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -12,63 +14,78 @@ namespace aoc2019
 {
     public class D12
     {
-        
+
         Moon[] moons = File.ReadAllLines("d12.txt").Select(l => Moon.FromString(l)).ToArray();
 
-        Dictionary<Moon, HashSet<Vector3>> VisitedPositions = new Dictionary<Moon, HashSet<Vector3>>();
-        Dictionary<Moon, HashSet<Vector3>> VisitedVelocities = new Dictionary<Moon, HashSet<Vector3>>();
-        HashSet<Moon> HasVisitedAllPosAndVel = new HashSet<Moon>();
+        // Dictionary<Moon, HashSet<(Vector3, Vector3)>> Visited = new Dictionary<Moon, HashSet<(Vector3, Vector3)>>();
+        // HashSet<int> HasVisitedAllPosAndVel = new HashSet<int>();
+        // List<int> visited = new List<int>();
 
         public string Answer()
         {
-            foreach (var moon in moons)
-            {
-                VisitedPositions[moon] = new HashSet<Vector3>();
-                VisitedVelocities[moon] = new HashSet<Vector3>();
-            }
+            var sw = new Stopwatch();
+            sw.Start();
+            long numSteps = 0;
+            var originalHash = (
+                moons[0].pos, moons[0].vel,
+                moons[1].pos, moons[1].vel,
+                moons[2].pos, moons[2].vel,
+                moons[3].pos, moons[3].vel
+            );
 
-            int numSteps = 0;
+            long lastNumSteps = 0;
             while (true)
             {
                 ApplyGravity();
                 UpdatePositions();
 
-                SavePositionsAndDirs();
+                // var hash = GetHash(moons);
+                if (originalHash == (
+                    moons[0].pos, moons[0].vel,
+                    moons[1].pos, moons[1].vel,
+                    moons[2].pos, moons[2].vel,
+                    moons[3].pos, moons[3].vel
+                ))
+                    break;
 
-                if (AllMoonsVisitedSamePosAndVel()) break;
-
+                // visited.Add(hash);
+                if (sw.ElapsedMilliseconds > 5000)
+                {
+                    sw.Restart();
+                    var diff = numSteps - lastNumSteps;
+                    System.Console.WriteLine($"Steps/s: {(diff / 5.0)}");
+                    lastNumSteps = numSteps;
+                }
                 numSteps++;
             }
+            sw.Stop();
+            System.Console.WriteLine(sw.ElapsedMilliseconds);
 
             return numSteps.ToString();
         }
 
-        private bool AllMoonsVisitedSamePosAndVel()
+        private int GetHash(Moon m)
         {
-            return HasVisitedAllPosAndVel.Count == moons.Length;
+            return HashCode.Combine(m.pos, m.vel);
         }
 
-        private void SavePositionsAndDirs()
+        private int GetHash(Moon[] moons)
         {
-            foreach (var moon in moons)
+            int hash = 0;
+            foreach (var m in moons)
             {
-                if (HasVisitedAllPosAndVel.Contains(moon)) continue;
-
-                if (VisitedPositions.TryGetValue(moon, out var visitedPos) && visitedPos.Contains(moon.pos) && VisitedVelocities.TryGetValue(moon, out var visitedVel) && visitedVel.Contains(moon.vel)) {
-                    HasVisitedAllPosAndVel.Add(moon);
-                    continue;
-                }
-
-                VisitedPositions[moon].Add(moon.pos);
-                VisitedVelocities[moon].Add(moon.vel);
+                hash = HashCode.Combine(hash, GetHash(m));
             }
+            return hash;
         }
 
         private void ApplyGravity()
         {
-            for(int p = 0; p < moons.Length - 1; p++) {
-                for (int pp = p + 1; pp < moons.Length; pp++) {
-                    var moonA = moons[p]; 
+            for (int p = 0; p < moons.Length - 1; p++)
+            {
+                for (int pp = p + 1; pp < moons.Length; pp++)
+                {
+                    var moonA = moons[p];
                     var moonB = moons[pp];
                     moonA.vel.x += moonA.pos.x == moonB.pos.x ? 0 : moonA.pos.x < moonB.pos.x ? 1 : -1;
                     moonB.vel.x += moonA.pos.x == moonB.pos.x ? 0 : moonA.pos.x < moonB.pos.x ? -1 : 1;
@@ -82,25 +99,58 @@ namespace aoc2019
 
         private void UpdatePositions()
         {
-            for(int p = 0; p < moons.Length; p++) {
-                var planet = moons[p];
-                planet.pos.x += planet.vel.x;
-                planet.pos.y += planet.vel.y;
-                planet.pos.z += planet.vel.z;
-            }
+            Parallel.ForEach(moons, (moon) =>
+            {
+                moon.pos.x += moon.vel.x;
+                moon.pos.y += moon.vel.y;
+                moon.pos.z += moon.vel.z;
+            });
         }
 
-        public class Moon {
+        public class Moon : IEquatable<Moon>
+        {
+            private static int id = 0;
+
             public Vector3 pos;
             public Vector3 vel = new Vector3();
-            public static Moon FromString(string s) {
+            private int MoonId;
+
+            public Moon()
+            {
+                MoonId = id++;
+            }
+
+            public Moon(Moon template)
+            {
+                pos = template.pos;
+                vel = template.vel;
+                MoonId = id++;
+            }
+
+            public static Moon FromString(string s)
+            {
                 var reg = new Regex(@"\<x=(\-?\d*),\sy=(\-?\d*),\sz=(\-?\d*)");
                 var matches = reg.Match(s);
                 var x = int.Parse(matches.Groups[1].ToString());
                 var y = int.Parse(matches.Groups[2].ToString());
                 var z = int.Parse(matches.Groups[3].ToString());
 
-                return new Moon() { pos = new Vector3(x, y, z)};
+                return new Moon() { pos = new Vector3(x, y, z) };
+            }
+
+            public bool Equals(Moon other)
+            {
+                return other != null && pos == other.pos && vel == other.vel;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is Moon m ? Equals(m) : false;
+            }
+
+            public override int GetHashCode()
+            {
+                return MoonId;
             }
 
             public override string ToString() => $"pos: {pos.ToString()}, dir: {vel.ToString()}";

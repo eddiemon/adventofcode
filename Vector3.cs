@@ -30,6 +30,14 @@ namespace aoc2019
             return x == other.x && y == other.y && z == other.z;
         }
 
+        public override bool Equals(object other) {
+            return other is Vector3 v ? Equals(v) : false;
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(x, y, z);
+        }
+
         public static bool operator ==(Vector3 a, Vector3 b)
         {
             return a.Equals(b);
