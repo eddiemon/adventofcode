@@ -15,23 +15,53 @@ namespace aoc2019
         
         Moon[] moons = File.ReadAllLines("d12.txt").Select(l => Moon.FromString(l)).ToArray();
 
+        Dictionary<Moon, HashSet<Vector3>> VisitedPositions = new Dictionary<Moon, HashSet<Vector3>>();
+        Dictionary<Moon, HashSet<Vector3>> VisitedVelocities = new Dictionary<Moon, HashSet<Vector3>>();
+        HashSet<Moon> HasVisitedAllPosAndVel = new HashSet<Moon>();
+
         public string Answer()
         {
-            const int numSteps = 1000;
-            for (int i = 0; i < numSteps; i++)
+            foreach (var moon in moons)
+            {
+                VisitedPositions[moon] = new HashSet<Vector3>();
+                VisitedVelocities[moon] = new HashSet<Vector3>();
+            }
+
+            int numSteps = 0;
+            while (true)
             {
                 ApplyGravity();
                 UpdatePositions();
+
+                SavePositionsAndDirs();
+
+                if (AllMoonsVisitedSamePosAndVel()) break;
+
+                numSteps++;
             }
 
-            int totalEnergy = 0;
+            return numSteps.ToString();
+        }
+
+        private bool AllMoonsVisitedSamePosAndVel()
+        {
+            return HasVisitedAllPosAndVel.Count == moons.Length;
+        }
+
+        private void SavePositionsAndDirs()
+        {
             foreach (var moon in moons)
             {
-                totalEnergy += (Math.Abs(moon.pos.x) + Math.Abs(moon.pos.y) + Math.Abs(moon.pos.z)) * 
-                (Math.Abs(moon.dir.x) + Math.Abs(moon.dir.y) + Math.Abs(moon.dir.z));
-            }
+                if (HasVisitedAllPosAndVel.Contains(moon)) continue;
 
-            return totalEnergy.ToString();
+                if (VisitedPositions.TryGetValue(moon, out var visitedPos) && visitedPos.Contains(moon.pos) && VisitedVelocities.TryGetValue(moon, out var visitedVel) && visitedVel.Contains(moon.vel)) {
+                    HasVisitedAllPosAndVel.Add(moon);
+                    continue;
+                }
+
+                VisitedPositions[moon].Add(moon.pos);
+                VisitedVelocities[moon].Add(moon.vel);
+            }
         }
 
         private void ApplyGravity()
@@ -40,12 +70,12 @@ namespace aoc2019
                 for (int pp = p + 1; pp < moons.Length; pp++) {
                     var moonA = moons[p]; 
                     var moonB = moons[pp];
-                    moonA.dir.x += moonA.pos.x == moonB.pos.x ? 0 : moonA.pos.x < moonB.pos.x ? 1 : -1;
-                    moonB.dir.x += moonA.pos.x == moonB.pos.x ? 0 : moonA.pos.x < moonB.pos.x ? -1 : 1;
-                    moonA.dir.y += moonA.pos.y == moonB.pos.y ? 0 : moonA.pos.y < moonB.pos.y ? 1 : -1;
-                    moonB.dir.y += moonA.pos.y == moonB.pos.y ? 0 : moonA.pos.y < moonB.pos.y ? -1 : 1;
-                    moonA.dir.z += moonA.pos.z == moonB.pos.z ? 0 : moonA.pos.z < moonB.pos.z ? 1 : -1;
-                    moonB.dir.z += moonA.pos.z == moonB.pos.z ? 0 : moonA.pos.z < moonB.pos.z ? -1 : 1;
+                    moonA.vel.x += moonA.pos.x == moonB.pos.x ? 0 : moonA.pos.x < moonB.pos.x ? 1 : -1;
+                    moonB.vel.x += moonA.pos.x == moonB.pos.x ? 0 : moonA.pos.x < moonB.pos.x ? -1 : 1;
+                    moonA.vel.y += moonA.pos.y == moonB.pos.y ? 0 : moonA.pos.y < moonB.pos.y ? 1 : -1;
+                    moonB.vel.y += moonA.pos.y == moonB.pos.y ? 0 : moonA.pos.y < moonB.pos.y ? -1 : 1;
+                    moonA.vel.z += moonA.pos.z == moonB.pos.z ? 0 : moonA.pos.z < moonB.pos.z ? 1 : -1;
+                    moonB.vel.z += moonA.pos.z == moonB.pos.z ? 0 : moonA.pos.z < moonB.pos.z ? -1 : 1;
                 }
             }
         }
@@ -54,15 +84,15 @@ namespace aoc2019
         {
             for(int p = 0; p < moons.Length; p++) {
                 var planet = moons[p];
-                planet.pos.x += planet.dir.x;
-                planet.pos.y += planet.dir.y;
-                planet.pos.z += planet.dir.z;
+                planet.pos.x += planet.vel.x;
+                planet.pos.y += planet.vel.y;
+                planet.pos.z += planet.vel.z;
             }
         }
 
         public class Moon {
             public Vector3 pos;
-            public Vector3 dir = new Vector3();
+            public Vector3 vel = new Vector3();
             public static Moon FromString(string s) {
                 var reg = new Regex(@"\<x=(\-?\d*),\sy=(\-?\d*),\sz=(\-?\d*)");
                 var matches = reg.Match(s);
@@ -73,7 +103,7 @@ namespace aoc2019
                 return new Moon() { pos = new Vector3(x, y, z)};
             }
 
-            public override string ToString() => $"pos: {pos.ToString()}, dir: {dir.ToString()}";
+            public override string ToString() => $"pos: {pos.ToString()}, dir: {vel.ToString()}";
         }
     }
 }
