@@ -5,6 +5,11 @@ using System.Threading.Tasks;
 
 namespace aoc2019
 {
+    public interface ISolution
+    {
+        string Answer { get; }
+    }
+
     class Program
     {
         static void Main(string[] args)
