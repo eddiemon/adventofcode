@@ -11,10 +11,10 @@ namespace aoc2019
 {
     public class D11
     {
-        public static Vector Up = new Vector(0, -1);
-        public static Vector Down = new Vector(0, 1);
-        public static Vector Left = new Vector(-1, 0);
-        public static Vector Right = new Vector(1, 0);
+        public static Vector2 Up = new Vector2(0, -1);
+        public static Vector2 Down = new Vector2(0, 1);
+        public static Vector2 Left = new Vector2(-1, 0);
+        public static Vector2 Right = new Vector2(1, 0);
 
         public string Answer()
         {
@@ -28,9 +28,9 @@ namespace aoc2019
 
             Task.Run(() => computer.Run());
 
-            var colorByPosition = new Dictionary<Vector, bool>();
-            var robotDirection = new Vector(Up);
-            var robot = new Vector();
+            var colorByPosition = new Dictionary<Vector2, bool>();
+            var robotDirection = new Vector2(Up);
+            var robot = new Vector2();
 
             colorByPosition.Add(robot, true);
             while (!halted)
@@ -64,7 +64,7 @@ namespace aoc2019
             {
                 for (int x = xMin; x <= xMax; x++)
                 {
-                    if (colorByPosition.GetValueOrDefault(new Vector(x, y))) Console.Write("#");
+                    if (colorByPosition.GetValueOrDefault(new Vector2(x, y))) Console.Write("#");
                     else Console.Write(".");
                 }
                 Console.WriteLine();
