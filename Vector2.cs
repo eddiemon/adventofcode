@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Text;
 
 namespace aoc2019
 {
@@ -48,5 +45,15 @@ namespace aoc2019
         }
 
         public override string ToString() => $"({x},{y})";
+
+        public override bool Equals(object obj)
+        {
+            return obj is Vector2 v ? Equals(v) : false;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(x, y);
+        }
     }
 }
