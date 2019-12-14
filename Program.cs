@@ -14,7 +14,7 @@ namespace aoc2019
     {
         static void Main(string[] args)
         {
-            Console.WriteLine(new D13().Answer());
+            Console.WriteLine(new D14().Answer());
         }
     }
 }
