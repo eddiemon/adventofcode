@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -9,62 +10,68 @@ namespace aoc2019
     {
         public string Answer()
         {
-            keyedReactions = File.ReadAllLines("D14.txt").Select(s => Reaction.FromString(s)).ToDictionary(r => r.Produces.Key);
+            ReactionPerProduct = File.ReadAllLines("D14.txt").Select(s => Reaction.FromString(s)).ToDictionary(r => r.Product.ReactantName);
 
-            foreach (var r in keyedReactions.Keys) Storage[r] = 0;
+            foreach (var r in ReactionPerProduct.Keys) Storage[r] = 0;
 
-            var fuelReaction = keyedReactions["FUEL"];
-            var fuel = 0;
-            long oresNeeded = 0;
-            long newOresNeeded = 0;
-            while (oresNeeded < 1_000_000_000_000)
-            {
-                newOresNeeded = ProduceOneReaction(fuelReaction);
-                oresNeeded += newOresNeeded;
-
-                fuel++;
-            }
-
-            fuel -= 1;
+            var fuel = Maths.LongBinarySearch(0, (long)1e12, numFuel => {
+                OreRequired = 0;
+                ProduceReactantOrder(new ReactantOrder("FUEL", numFuel));
+                return OreRequired > 1e12;
+            });
 
             return fuel.ToString();
         }
 
-        Dictionary<string, Reaction> keyedReactions = null;
+        Dictionary<string, long> Storage = new Dictionary<string, long>();
+        Dictionary<string, Reaction> ReactionPerProduct = null;
 
-        Dictionary<string, int> Storage = new Dictionary<string, int>();
+        long OreRequired = 0;
 
-        private int ProduceOneReaction(Reaction reaction)
+        private void ProduceReactantOrder(ReactantOrder order)
         {
-            if (reaction.Input.ContainsKey("ORE"))
+            checked
             {
-                Storage[reaction.Produces.Key] += reaction.Produces.Value;
-                return reaction.Input["ORE"];
-            }
-
-            int oreCount = 0;
-            foreach (var r in reaction.Input)
-            {
-                var rr = keyedReactions[r.Key];
-                while (Storage.GetValueOrDefault(r.Key) < r.Value)
+                if (order.ReactantName == "ORE")
                 {
-                    oreCount += ProduceOneReaction(rr);
+                    OreRequired += order.Amount;
+                    return;
                 }
-                Storage[r.Key] -= r.Value;
+
+                if (Storage[order.ReactantName] >= order.Amount)
+                {
+                    Storage[order.ReactantName] -= order.Amount;
+                    return;
+                }
+                else
+                {
+                    order.Amount -= Storage[order.ReactantName];
+                    Storage[order.ReactantName] = 0;
+                }
+
+                var r = ReactionPerProduct[order.ReactantName];
+
+                var reactions = (long)Math.Ceiling(order.Amount / (double)r.Product.Amount);
+                foreach (var reactant in r.Reactants)
+                {
+                    ProduceReactantOrder(new ReactantOrder(reactant.ReactantName, reactant.Amount * reactions));
+                }
+
+                var leftOverReactantAfterOrder = r.Product.Amount * reactions - order.Amount;
+
+                if (leftOverReactantAfterOrder > 0)
+                {
+                    Storage[order.ReactantName] = leftOverReactantAfterOrder;
+                }
             }
-
-            var alreadyProduced = Storage[reaction.Produces.Key];
-            Storage[reaction.Produces.Key] = alreadyProduced + reaction.Produces.Value;
-
-            return oreCount;
         }
 
         class Reaction
         {
             private static Regex r = new Regex(@"(\d+)\s(\w+)");
 
-            public Dictionary<string, int> Input = new Dictionary<string, int>();
-            public KeyValuePair<string, int> Produces;
+            public List<ReactantOrder> Reactants = new List<ReactantOrder>();
+            public ReactantOrder Product;
 
             public static Reaction FromString(string s)
             {
@@ -74,19 +81,34 @@ namespace aoc2019
                 for (int i = 0; i < matches.Count - 1; i++)
                 {
                     var m = matches[i];
-                    reaction.Input[m.Groups[2].ToString()] = int.Parse(m.Groups[1].ToString());
+                    reaction.Reactants.Add(new ReactantOrder(m.Groups[2].ToString(), int.Parse(m.Groups[1].ToString())));
                 }
 
                 var lastMatch = matches[matches.Count - 1];
-                reaction.Produces = new KeyValuePair<string, int>(lastMatch.Groups[2].ToString(), int.Parse(lastMatch.Groups[1].ToString()));
+                reaction.Product = new ReactantOrder(lastMatch.Groups[2].ToString(), int.Parse(lastMatch.Groups[1].ToString()));
 
                 return reaction;
             }
 
             public override string ToString()
             {
-                return string.Join(", ", Input.Select(x => $"{x.Value} {x.Key}")) + " => " + $"{Produces.Value} {Produces.Key}";
+                return string.Join(", ", Reactants.Select(x => $"{x.Amount} {x.ReactantName}")) + " => " + $"{Product.Amount} {Product.ReactantName}";
             }
+        }
+
+        struct ReactantOrder
+        {
+            public readonly string ReactantName;
+            public long Amount;
+
+            [System.Diagnostics.DebuggerStepThrough]
+            public ReactantOrder(string reactantName, long amount)
+            {
+                ReactantName = reactantName;
+                Amount = amount;
+            }
+
+            public override string ToString() => $"{Amount} {ReactantName}";
         }
     }
 }
