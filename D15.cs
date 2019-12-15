@@ -25,133 +25,82 @@ namespace aoc2019
 
         const int Wall = 0;
         const int Empty = 1;
-        const int OxygenTank = 2;
-        const int Droid = 3;
+        const int Oxygen = 2;
 
-        Dictionary<(int x, int y), int> room = new Dictionary<(int, int), int>();
-        IntCodeSync computer;
+        int width, height;
+        int[] grid;
 
-        public string Answer()
+        public object Answer()
         {
-            var computerMemory = File.ReadAllText("d15.txt").Split(',').Select(x => BigInteger.Parse(x)).ToArray();
-            computer = new IntCodeSync(computerMemory);
-
-            BreadthSearchFrom((0, 0));
-
-            Console.ForegroundColor = ConsoleColor.White;
-            PrintRoom(room);
-
-            var grid = ConvertToGrid(room);
-            var minX = room.Min(kvp => kvp.Key.x);
-            var minY = room.Min(kvp => kvp.Key.y);
-            var maxY = room.Max(kvp => kvp.Key.y);
-
-            var origin = new Position(-minX, -minY);
-            var oxygenTank = new Position(oxygenPos.x - minX, oxygenPos.y - minY);
-            var path = grid.GetPath(origin, oxygenTank, MovementPatterns.LateralOnly);
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            foreach (var p in path)
+            var input = File.ReadAllLines("d15.2.txt");
+            width = int.Parse(input[0]);
+            height = int.Parse(input[1]);
+            oxygenPos = (int.Parse(input[2]), int.Parse(input[3]));
+            grid = new int[height * width];
+            for (int row = 0; row < height; row++)
             {
-                Console.SetCursorPosition(p.X, p.Y);
-                if (p == origin) Console.Write('X');
-                else if (p == oxygenTank) { Console.ForegroundColor = ConsoleColor.Cyan; Console.Write('T'); }
-                else Console.Write('.');
+                for (int col = 0; col < width; col++)
+                {
+                    grid[row * width + col] = input[4 + row][col] == '#' ? Wall : Empty;
+                }
             }
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.SetCursorPosition(0, maxY - minY + 1);
+            grid[oxygenPos.y * width + oxygenPos.x] = Oxygen;
+            PrintGrid();
 
-            return (path.Length - 1).ToString(); // Remove starting point
+            BreadthSearchFrom(oxygenPos);
+
+
+            return maxSteps;
         }
 
-        Vector2 droidPos;
         Vector2 oxygenPos;
+        int maxSteps = 0;
 
-        public void BreadthSearchFrom(Vector2 pos)
+        public void BreadthSearchFrom(Vector2 pos, int steps = 0)
         {
-            var unvisitedPositions = new List<(Vector2 pos, int heading)>();
+            var unvisitedPositions = new List<Vector2>();
             for (int heading = North; heading < East + 1; heading++)
             {
                 var newPos = pos + HeadingToVector[heading];
-                if (!room.ContainsKey(newPos)) unvisitedPositions.Add((newPos, heading));
+                if (newPos.x < 0 || newPos.x > width || newPos.y < 0 || newPos.y > height) continue;
+                if (grid[newPos.y * width + newPos.x] == Wall) continue;
+                if (grid[newPos.y * width + newPos.x] == Oxygen) continue;
+
+                unvisitedPositions.Add(newPos);
             }
 
             foreach (var position in unvisitedPositions)
             {
-                var computerSnapshot = computer.CreateSnapshot();
-
-                computer.Run(position.heading);
-                var status = computer.Run();
-
-                room[position.pos] = (int)status;
-
-                if (status == OxygenTank)
-                    oxygenPos = position.pos;
-
-                if (status != Wall)
-                {
-                    droidPos = position.pos;
-                    BreadthSearchFrom(position.pos);
-                }
-
-                computer.RestoreFromSnapshot(computerSnapshot);
+                grid[position.y * width + position.x] = Oxygen;
             }
+
+            //PrintGrid();
+            //Thread.Sleep(100);
+
+            foreach (var position in unvisitedPositions)
+            {
+                BreadthSearchFrom(position, steps + 1);
+            }
+            if (steps > maxSteps) maxSteps = steps;
         }
 
-        private Grid ConvertToGrid(Dictionary<(int x, int y), int> room)
+        void PrintGrid()
         {
-            var minX = room.Min(kvp => kvp.Key.x);
-            var maxX = room.Max(kvp => kvp.Key.x);
-            var minY = room.Min(kvp => kvp.Key.y);
-            var maxY = room.Max(kvp => kvp.Key.y);
+            Console.Clear();
 
-            var grid = new Grid(maxX - minX + 1, maxY - minY + 1);
-
-            for (int y = minY; y < maxY + 1; y++)
+            var color = Console.ForegroundColor;
+            for (int row = 0; row < height; row++)
             {
-                for (int x = minX; x < maxX + 1; x++)
+                for (int col = 0; col < width; col++)
                 {
-                    if (room.TryGetValue((x, y), out var t))
-                    {
-                        if (t == Wall) grid.BlockCell(new Position(x - minX, y - minY));
-                    }
-                    else
-                        grid.BlockCell(new Position(x - minX, y - minY));
+                    var t = grid[row * width + col];
+                    if (t == Wall) { Console.ForegroundColor = ConsoleColor.Red; Console.Write('#'); }
+                    else if (t == Empty) { Console.ForegroundColor = ConsoleColor.White; Console.Write('.'); }
+                    else if (t == Oxygen) { Console.ForegroundColor = ConsoleColor.Cyan; Console.Write('O'); }
                 }
+                Console.WriteLine();
             }
-            return grid;
-        }
-
-        int prevMinX = 0;
-        int prevMinY = 0;
-        private void PrintRoom(Dictionary<(int x, int y), int> room)
-        {
-            var minX = room.Min(kvp => kvp.Key.x);
-            var minY = room.Min(kvp => kvp.Key.y);
-
-            if (prevMinX != minX || prevMinY != minY)
-            {
-                Console.Clear();
-                prevMinX = minX;
-                prevMinY = minY;
-            }
-
-            foreach (var p in room.OrderBy(p => p.Key.y).ThenBy(p => p.Key.x))
-            {
-                var (x, y) = p.Key;
-                var t = p.Value;
-
-                var color = Console.ForegroundColor;
-                Console.SetCursorPosition(x - minX, y - minY);
-                if (t == Wall) { Console.ForegroundColor = ConsoleColor.Red; Console.Write('#'); }
-                else if (p.Key == droidPos) Console.Write('O');
-                else if (t == OxygenTank) { Console.ForegroundColor = ConsoleColor.Blue; Console.Write('T'); }
-                else if (t == Empty) Console.Write('.');
-
-                Console.ForegroundColor = color;
-            }
-
-            Console.WriteLine();
+            Console.ForegroundColor = color;
         }
     }
 }
