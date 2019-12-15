@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Threading;
 
-namespace aoc2019
+namespace aoc
 {
     public class IntCode
     {

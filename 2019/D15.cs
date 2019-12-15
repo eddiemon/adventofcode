@@ -6,7 +6,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 
-namespace aoc2019
+namespace aoc
 {
     public class D15
     {

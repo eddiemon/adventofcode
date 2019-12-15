@@ -1,6 +1,6 @@
 using System;
 
-namespace aoc2019 {
+namespace aoc {
     public static class Maths {
         
         public static int gcd(int a, int b) => a == 0 ? b : gcd(b % a, a);
@@ -10,9 +10,9 @@ namespace aoc2019 {
         {
             while (hi - lo > 1)
             {
-                var val = lo + (hi - lo) / 2;
-                if (predicate(val)) hi = val;
-                else lo = val;
+                var mid = lo + (hi - lo) / 2;
+                if (predicate(mid)) hi = mid;
+                else lo = mid;
             }
             return lo;
         }
@@ -21,9 +21,9 @@ namespace aoc2019 {
         {
             while (hi - lo > 1)
             {
-                var val = lo + (hi - lo) / 2;
-                if (predicate(val)) hi = val;
-                else lo = val;
+                var mid = lo + (hi - lo) / 2;
+                if (predicate(mid)) hi = mid;
+                else lo = mid;
             }
             return lo;
         }

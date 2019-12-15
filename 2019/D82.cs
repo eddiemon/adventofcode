@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Drawing;
 
-namespace aoc2019
+namespace aoc
 {
     internal class D82
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace aoc2019
+namespace aoc
 {
     public static class StringExtension
     {

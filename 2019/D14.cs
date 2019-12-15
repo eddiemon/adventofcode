@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace aoc2019
+namespace aoc
 {
     public class D14
     {

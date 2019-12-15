@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 
-namespace aoc2019
+namespace aoc
 {
-    public class D31
+    public class D32
     {
         public string Answer
         {
@@ -18,22 +18,29 @@ namespace aoc2019
                 var w1 = CreateSegmentsFromDirections(w1Dirs);
                 var w2 = CreateSegmentsFromDirections(w2Dirs);
 
-                int minDistance = int.MaxValue;
+                int minSteps = int.MaxValue;
+                int w1Steps = 0;
                 foreach (var seg1 in w1)
                 {
+                    w1Steps += seg1.Length;
+                    int w2Steps = 0;
                     foreach (var seg2 in w2)
                     {
-                        var intersection = seg1.IntersectingPoint(seg2);
+                        w2Steps += seg2.Length;
+                        var intersection1 = seg1.IntersectingPoint(seg2);
+                        var intersection2 = seg2.IntersectingPoint(seg1);
+                        var intersection = intersection1.HasValue ? intersection1 : intersection2.HasValue ? intersection2 : null;
                         if (intersection != null)
                         {
-                            var intersectionDistance = Math.Abs(intersection.Value.X) + Math.Abs(intersection.Value.Y);
-                            if (intersectionDistance < minDistance)
-                                minDistance = intersectionDistance;
+                            var totalSteps = w1Steps + w2Steps - seg1.LengthFromPoint(intersection.Value) - seg2.LengthFromPoint(intersection.Value);
+                            if (totalSteps < minSteps) {
+                                minSteps = totalSteps;
+                            }
                         }
                     }
                 }
 
-                return minDistance.ToString();
+                return minSteps.ToString();
             }
         }
 
@@ -64,6 +71,21 @@ namespace aoc2019
         {
             public Point Start;
             public Point End;
+
+            public int LengthFromPoint(Point point) {
+                return Segment.LengthBetweenPoints(point, End);
+            }
+
+            public int Length => Segment.LengthBetweenPoints(Start, End);
+
+            private static int LengthBetweenPoints(Point p1, Point p2) {
+                var p = Subtract(p2, p1);
+                return Math.Abs(p.X) + Math.Abs(p.Y);
+            }
+
+            private static Point Subtract(Point p1, Point p2) {
+                return new Point(p2.X - p1.X, p2.Y - p1.Y);
+            }
 
             internal Point? IntersectingPoint(Segment other)
             {

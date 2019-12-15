@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace aoc2019
+namespace aoc
 {
     public struct Vector2 : IEquatable<Vector2>
     {

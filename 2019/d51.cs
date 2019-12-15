@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace aoc2019
+namespace aoc
 {
-    public class D52
+    public class D51
     {
         public string Answer
         {
@@ -20,41 +20,20 @@ namespace aoc2019
 
                 BuildOrbiters();
 
-                var sanJumps = new Dictionary<SpaceObject, int>();
-                var spaceObject = _spaceObjects["SAN"];
-                int counter = 0;
-                while (true)
-                {
-                    if (spaceObject.Orbits == null)
-                        break;
-                    spaceObject = spaceObject.Orbits;
-                    sanJumps[spaceObject] = counter++;
-                }
+                int orbitalCounts = CountOrbitersOf(_spaceObjects["COM"], 0);
 
-                var youJumps = new Dictionary<SpaceObject, int>();
-                spaceObject = _spaceObjects["YOU"];
-                counter = 0;
-                while (true)
-                {
-                    if (spaceObject.Orbits == null)
-                        break;
-                    spaceObject = spaceObject.Orbits;
-                    youJumps[spaceObject] = counter++;
-                }
-
-                SpaceObject commonSpaceObj = null;
-                foreach (var kvp in youJumps)
-                {
-                    if (sanJumps.ContainsKey(kvp.Key))
-                    {
-                        commonSpaceObj = kvp.Key;
-                        break;
-                    }
-                }
-                var totalJumps = sanJumps[commonSpaceObj] + youJumps[commonSpaceObj];
-
-                return totalJumps.ToString();
+                return orbitalCounts.ToString();
             }
+        }
+
+        private int CountOrbitersOf(SpaceObject spaceObject, int orbitalCounts)
+        {
+            int newCount = orbitalCounts;
+            foreach (var o in spaceObject.Orbiters)
+            {
+                newCount += CountOrbitersOf(o, orbitalCounts + 1);
+            }
+            return newCount;
         }
 
         private void BuildOrbiters()

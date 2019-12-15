@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace aoc2019
+namespace aoc
 {
     internal class D81
     {

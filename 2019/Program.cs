@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace aoc2019
+namespace aoc
 {
     public interface ISolution
     {

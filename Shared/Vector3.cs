@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
-namespace aoc2019
+namespace aoc
 {
     public struct Vector3 : IEquatable<Vector3>
     {

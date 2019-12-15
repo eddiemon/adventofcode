@@ -5,7 +5,7 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.Serialization;
 
-namespace aoc2019
+namespace aoc
 {
     public class IntCodeSync
     {

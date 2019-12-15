@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 
 
-namespace aoc2019
+namespace aoc
 {
     public class D101 : ISolution
     {

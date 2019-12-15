@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace aoc2019
+namespace aoc
 {
     public class D72
     {

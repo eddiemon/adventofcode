@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 
-namespace aoc2019
+namespace aoc
 {
     public class D91
     {
