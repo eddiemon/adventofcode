@@ -61,6 +61,20 @@ namespace aoc
             return obj is Vector2 v ? Equals(v) : false;
         }
 
+        public int DistanceTo(Vector3 other)
+        {
+            return (int)Math.Sqrt(
+                Math.Pow(x - other.x, 2) +
+                Math.Pow(y - other.y, 2)
+            );
+        }
+
+        public int ManhattanDistanceTo(Vector3 other)
+        {
+            return Math.Abs(x - other.x) +
+                Math.Abs(y - other.y);
+        }
+
         public override int GetHashCode()
         {
             return HashCode.Combine(x, y);

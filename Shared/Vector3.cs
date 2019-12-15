@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Text;
 
 namespace aoc
 {
@@ -66,6 +63,22 @@ namespace aoc
         public static implicit operator Vector3((int x, int y, int z) v)
         {
             return new Vector3(v.x, v.y, v.z);
+        }
+
+        public int DistanceTo(Vector3 other)
+        {
+            return (int)Math.Sqrt(
+                Math.Pow(x - other.x, 2) +
+                Math.Pow(y - other.y, 2) +
+                Math.Pow(z - other.z, 2)
+            );
+        }
+
+        public int ManhattanDistanceTo(Vector3 other)
+        {
+            return Math.Abs(x - other.x) +
+                Math.Abs(y - other.y) +
+                Math.Abs(z - other.z);
         }
 
         public override string ToString() => $"({x},{y},{z})";
