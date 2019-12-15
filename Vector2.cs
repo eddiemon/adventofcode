@@ -44,6 +44,16 @@ namespace aoc2019
             return new Vector2(a.x - b.x, a.y - b.y);
         }
 
+        public static implicit operator (int x, int y)(Vector2 v)
+        {
+            return (v.x, v.y);
+        }
+
+        public static implicit operator Vector2((int x, int y) v)
+        {
+            return new Vector2(v.x, v.y);
+        }
+
         public override string ToString() => $"({x},{y})";
 
         public override bool Equals(object obj)

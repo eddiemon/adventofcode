@@ -58,6 +58,16 @@ namespace aoc2019
             return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
         }
 
+        public static implicit operator (int x, int y, int z)(Vector3 v)
+        {
+            return (v.x, v.y, v.z);
+        }
+
+        public static implicit operator Vector3((int x, int y, int z) v)
+        {
+            return new Vector3(v.x, v.y, v.z);
+        }
+
         public override string ToString() => $"({x},{y},{z})";
     }
 }

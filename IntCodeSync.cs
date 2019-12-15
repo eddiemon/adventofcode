@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.Serialization;
 
@@ -19,8 +20,8 @@ namespace aoc2019
         private const string OpCodeRelativeBaseOffset = "09";
         private const string OpCodeBreak = "99";
 
-        private readonly BigInteger[] Memory;
-        private readonly Dictionary<BigInteger, BigInteger> BigMemory = new Dictionary<BigInteger, BigInteger>();
+        private BigInteger[] Memory;
+        private Dictionary<BigInteger, BigInteger> BigMemory = new Dictionary<BigInteger, BigInteger>();
         private BigInteger RelativeBaseAddress = 0;
 
         public IntCodeSync(BigInteger[] memory)
@@ -201,6 +202,36 @@ namespace aoc2019
             else
                 return Memory[(int)absoluteAddress];
         }
+
+        public IntCodeSnapshot CreateSnapshot()
+        {
+            var memoryCopy = new BigInteger[Memory.Length];
+            Memory.CopyTo(memoryCopy, 0);
+            return new IntCodeSnapshot
+            {
+                InstructionPointer = iptr,
+                Memory = memoryCopy,
+                BigMemory = BigMemory.ToDictionary(k => k.Key, k => k.Value),
+                RelativeBaseAddress = RelativeBaseAddress
+            };
+        }
+
+        public void RestoreFromSnapshot(IntCodeSnapshot snapshot)
+        {
+            iptr = snapshot.InstructionPointer;
+            Memory = snapshot.Memory;
+            BigMemory = snapshot.BigMemory;
+            RelativeBaseAddress = snapshot.RelativeBaseAddress;
+        }
+    }
+
+    public class IntCodeSnapshot
+    {
+        public BigInteger InstructionPointer;
+
+        public BigInteger[] Memory;
+        public Dictionary<BigInteger, BigInteger> BigMemory;
+        public BigInteger RelativeBaseAddress;
     }
 
     [Serializable]
