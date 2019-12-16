@@ -14,7 +14,7 @@ namespace aoc
     {
         static void Main(string[] args)
         {
-            Console.WriteLine(new D15().Answer());
+            Console.WriteLine(new D16().Answer());
         }
     }
 }
