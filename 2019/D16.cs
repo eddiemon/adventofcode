@@ -12,10 +12,11 @@ namespace aoc
 
         public object Answer()
         {
-            var numbers = Enumerable.Repeat(File.ReadAllText("16.in").Select(c => int.Parse(c.ToString())), 10).SelectMany(x => x).ToArray();
+            var numbers = Enumerable.Repeat(File.ReadAllText("16.in").Select(c => int.Parse(c.ToString())), 100).SelectMany(x => x).ToArray();
 
             for (int p = 0; p < phases; p++)
             {
+                Console.WriteLine($"Phase {p + 1}");
                 ApplyPhase(numbers);
             }
 
@@ -24,20 +25,67 @@ namespace aoc
 
         private void ApplyPhase(int[] numbers)
         {
-            for (int i = 0; i < numbers.Length; i++)
+            for (int i = 0; i < numbers.Length / 2; i++)
             {
-                var pattern = GeneratePattern(i + 1).GetEnumerator();
                 var sum = 0;
-                for (int j = 0; j < numbers.Length && pattern.MoveNext(); j++)
+
+                var basePatternIdx = 0;
+                int ret = basePattern[basePatternIdx];
+
+                int processed = 0;
+                for (int j = 0; j < i; j++)
                 {
-                    if (pattern.Current == 0) continue;
-                    else if (pattern.Current == 1) sum += numbers[j];
-                    else if (pattern.Current == -1) sum -= numbers[j];
-                    //sum += numbers[j] * pattern.Current;
+                    if (ret == 1) sum += numbers[processed++];
+                    else if (ret == 0) { ++processed; continue; }
                 }
+
+                basePatternIdx = (basePatternIdx + 1) % basePattern.Length;
+                ret = basePattern[basePatternIdx];
+
+                while (processed < numbers.Length - i)
+                {
+                    for (int j = 0; j < i + 1; j++)
+                    {
+                        if (ret == 0) { ++processed; continue; }
+                        if (ret == 1) sum += numbers[processed++];
+                        else if (ret == -1) sum -= numbers[processed++];
+                    }
+                    basePatternIdx = (basePatternIdx + 1) % basePattern.Length;
+                    ret = basePattern[basePatternIdx];
+                }
+
+                if (ret == 1)
+                {
+                    for (int j = 0; j < i + 1 && processed < numbers.Length; j++)
+                    {
+                        sum += numbers[processed++];
+                    }
+                }
+                else if (ret == -1)
+                {
+                    for (int j = 0; j < i + 1 && processed < numbers.Length; j++)
+                    {
+                        sum -= numbers[processed++];
+                    }
+                }
+
                 var n = sum.ToString();
                 numbers[i] = (int)(n[n.Length - 1] - '0');
-                Console.WriteLine($"Calculated number {i} of {numbers.Length}");
+                //Console.WriteLine($"Calculated number {i + 1} of {numbers.Length}");
+            }
+
+            // from half of list the list, the right part is only added
+            for (int i = numbers.Length / 2; i < numbers.Length; i++)
+            {
+                var sum = 0;
+                for (int j = i; j < numbers.Length; j++)
+                {
+                     sum += numbers[j];
+                }
+
+                var n = sum.ToString();
+                numbers[i] = (int)(n[n.Length - 1] - '0');
+                //Console.WriteLine($"Calculated number {i + 1} of {numbers.Length}");
             }
         }
 
