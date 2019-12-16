@@ -12,7 +12,7 @@ namespace aoc
 
         public object Answer()
         {
-            var numbers = File.ReadAllText("16.in").Select(c => int.Parse(c.ToString())).ToArray();
+            var numbers = Enumerable.Repeat(File.ReadAllText("16.in").Select(c => int.Parse(c.ToString())), 10).SelectMany(x => x).ToArray();
 
             for (int p = 0; p < phases; p++)
             {
@@ -31,10 +31,13 @@ namespace aoc
                 for (int j = 0; j < numbers.Length && pattern.MoveNext(); j++)
                 {
                     if (pattern.Current == 0) continue;
-                    sum += numbers[j] * pattern.Current;
+                    else if (pattern.Current == 1) sum += numbers[j];
+                    else if (pattern.Current == -1) sum -= numbers[j];
+                    //sum += numbers[j] * pattern.Current;
                 }
                 var n = sum.ToString();
                 numbers[i] = (int)(n[n.Length - 1] - '0');
+                Console.WriteLine($"Calculated number {i} of {numbers.Length}");
             }
         }
 
@@ -47,6 +50,9 @@ namespace aoc
             {
                 yield return ret;
             }
+
+            basePatternIdx = (basePatternIdx + 1) % basePattern.Length;
+            ret = basePattern[basePatternIdx];
 
             while (true)
             {
