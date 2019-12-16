@@ -24,21 +24,31 @@ namespace aoc2018
             return G.Count;
         }
 
-        private static List<Vector4> FindCloseBy(Vector4 p, List<Vector4> unvisited)
+        private static List<Vector4> FindCloseBy(Vector4 start, List<Vector4> unvisited)
         {
-            var g = new List<Vector4>();
-            g.Add(p);
-            unvisited.Remove(p);
-            var closeBy = unvisited.Where(pp => p.ManhattanDistanceTo(pp) <= 3).ToList();
-            foreach (var pp in closeBy)
+            var visited = new HashSet<Vector4>();
+
+            var queue = new Queue<Vector4>();
+            queue.Enqueue(start);
+
+            while (queue.Count > 0)
             {
-                g.Add(pp);
-                unvisited.Remove(pp);
+                var p = queue.Dequeue();
+
             }
-            foreach (var pp in closeBy)
-            {
-                FindCloseBy(pp, unvisited);
-            }
+
+            //g.Add(p);
+            //unvisited.Remove(p);
+            //var closeBy = unvisited.Where(pp => p.ManhattanDistanceTo(pp) <= 3).ToList();
+            //foreach (var pp in closeBy)
+            //{
+            //    g.Add(pp);
+            //    unvisited.Remove(pp);
+            //}
+            //foreach (var pp in closeBy)
+            //{
+            //    FindCloseBy(pp, unvisited);
+            //}
 
             return g;
         }
