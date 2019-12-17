@@ -1,69 +1,105 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace aoc
 {
     internal class D16
     {
-        static int[] basePattern = new int[] { 0, 1, 0, -1 };
         const int phases = 100;
 
         public object Answer()
         {
-            var numbers = Enumerable.Repeat(File.ReadAllText("16.in").Select(c => int.Parse(c.ToString())), 100).SelectMany(x => x).ToArray();
+            var numbers = Enumerable.Repeat(File.ReadAllText("16.2").Select(c => int.Parse(c.ToString())), 10000).SelectMany(x => x).ToArray().AsSpan();
 
-            for (int p = 0; p < phases; p++)
+            unchecked
             {
-                Console.WriteLine($"Phase {p + 1}");
-                ApplyPhase(numbers);
+                for (int p = 0; p < phases; p++)
+                {
+                    Console.WriteLine($"Applying phase {p + 1}");
+                    ApplyPhase(numbers);
+                }
             }
-
-            return string.Join("", numbers.Take(8));
+            var sb = new StringBuilder();
+            foreach (var n in numbers.Slice(0, 8))
+                sb.Append(n.ToString());
+            var offset = int.Parse(sb.ToString());
+            sb.Clear();
+            foreach (var n in numbers.Slice(offset, 8))
+                sb.Append(n.ToString());
+            return sb.ToString();
         }
 
-        private void ApplyPhase(int[] numbers)
+        private unsafe void ApplyPhase(Span<int> numbers)
         {
-            for (int i = 0; i < numbers.Length / 2; i++)
+            var basePattern = stackalloc[] { 1, 0, -1, 0 };
+            var basePatternLength = 4;
+
+            var length = numbers.Length;
+            var sw = new Stopwatch();
+            sw.Start();
+            // Process first half of all the numbers
+            for (int i = 0; i < length / 2; i++)
             {
                 var sum = 0;
+                var processed = i; // Skip i characters, since they are all 0
 
                 var basePatternIdx = 0;
                 int ret = basePattern[basePatternIdx];
 
-                int processed = 0;
-                for (int j = 0; j < i; j++)
+                while (processed < length - i)
                 {
-                    if (ret == 1) sum += numbers[processed++];
-                    else if (ret == 0) { ++processed; continue; }
-                }
+                    var repetitions = i + 1;
 
-                basePatternIdx = (basePatternIdx + 1) % basePattern.Length;
-                ret = basePattern[basePatternIdx];
-
-                while (processed < numbers.Length - i)
-                {
-                    for (int j = 0; j < i + 1; j++)
+                    var slice = numbers.Slice(processed, repetitions);
+                    switch (ret)
                     {
-                        if (ret == 0) { ++processed; continue; }
-                        if (ret == 1) sum += numbers[processed++];
-                        else if (ret == -1) sum -= numbers[processed++];
+                        case 1:
+                            for (int j = 0; j < repetitions; j++)
+                            {
+                                sum += slice[j];
+                            }
+                            processed += repetitions;
+                            break;
+                        case -1:
+                            for (int j = 0; j < repetitions; j++)
+                            {
+                                sum -= slice[j];
+                            }
+                            processed += repetitions;
+                            break;
                     }
-                    basePatternIdx = (basePatternIdx + 1) % basePattern.Length;
+                    //if (ret == 1)
+                    //{
+                    //}
+                    //else if (ret == -1)
+                    //{
+                    //}
+
+                    basePatternIdx += basePatternIdx < basePatternLength - 1 ? 1 : -3;
                     ret = basePattern[basePatternIdx];
+
+                    if (ret == 0)
+                    {
+                        processed += repetitions;
+                        basePatternIdx += basePatternIdx < basePatternLength - 1 ? 1 : -3;
+                        ret = basePattern[basePatternIdx];
+                    }
                 }
 
                 if (ret == 1)
                 {
-                    for (int j = 0; j < i + 1 && processed < numbers.Length; j++)
+                    for (int j = 0; j < i + 1 && processed < length; j++)
                     {
                         sum += numbers[processed++];
                     }
                 }
                 else if (ret == -1)
                 {
-                    for (int j = 0; j < i + 1 && processed < numbers.Length; j++)
+                    for (int j = 0; j < i + 1 && processed < length; j++)
                     {
                         sum -= numbers[processed++];
                     }
@@ -71,47 +107,25 @@ namespace aoc
 
                 var n = sum.ToString();
                 numbers[i] = (int)(n[n.Length - 1] - '0');
-                //Console.WriteLine($"Calculated number {i + 1} of {numbers.Length}");
-            }
 
-            // from half of list the list, the right part is only added
-            for (int i = numbers.Length / 2; i < numbers.Length; i++)
+            }
+            sw.Stop();
+            Console.WriteLine($"Processed half of numbers in {sw.ElapsedMilliseconds} ms");
+            sw.Restart();
+            // from half of list the list, the right part is only added since they are all zero
+            for (int i = length / 2; i < length; i++)
             {
                 var sum = 0;
-                for (int j = i; j < numbers.Length; j++)
+                for (int j = i; j < length; j++)
                 {
-                     sum += numbers[j];
+                    sum += numbers[j];
                 }
 
                 var n = sum.ToString();
                 numbers[i] = (int)(n[n.Length - 1] - '0');
-                //Console.WriteLine($"Calculated number {i + 1} of {numbers.Length}");
             }
-        }
-
-        private IEnumerable<int> GeneratePattern(int repeats)
-        {
-            var basePatternIdx = 0;
-            int ret = basePattern[basePatternIdx];
-
-            for (int i = 0; i < repeats - 1; i++)
-            {
-                yield return ret;
-            }
-
-            basePatternIdx = (basePatternIdx + 1) % basePattern.Length;
-            ret = basePattern[basePatternIdx];
-
-            while (true)
-            {
-                for (int i = 0; i < repeats; i++)
-                {
-                    yield return ret;
-                }
-                basePatternIdx = (basePatternIdx + 1) % basePattern.Length;
-                ret = basePattern[basePatternIdx];
-            }
-
+            sw.Stop();
+            Console.WriteLine($"Processed other half of numbers in {sw.ElapsedMilliseconds} ms");
         }
     }
 }
