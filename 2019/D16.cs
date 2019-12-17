@@ -35,9 +35,6 @@ namespace aoc
 
         private unsafe void ApplyPhase(Span<int> numbers)
         {
-            var basePattern = stackalloc[] { 1, 0, -1, 0 };
-            var basePatternLength = 4;
-
             var length = numbers.Length;
             var sw = new Stopwatch();
             sw.Start();
@@ -46,64 +43,89 @@ namespace aoc
             {
                 var sum = 0;
                 var processed = i; // Skip i characters, since they are all 0
-
-                var basePatternIdx = 0;
-                int ret = basePattern[basePatternIdx];
-
-                while (processed < length - i)
+                var repetitions = i + 1;
+                while (processed < length)
                 {
-                    var repetitions = i + 1;
+                    Span<int> slice;
+                    if (processed + repetitions < length)
+                        slice = numbers.Slice(processed, repetitions);
+                    else if (processed >= length) break;
+                    else
+                        slice = numbers.Slice(processed, length - processed);
 
-                    var slice = numbers.Slice(processed, repetitions);
-                    switch (ret)
+                    // add
+                    int l = slice.Length;
+                    for (int j = 0; j < l; j++)
                     {
-                        case 1:
-                            for (int j = 0; j < repetitions; j++)
-                            {
-                                sum += slice[j];
-                            }
-                            processed += repetitions;
-                            break;
-                        case -1:
-                            for (int j = 0; j < repetitions; j++)
-                            {
-                                sum -= slice[j];
-                            }
-                            processed += repetitions;
-                            break;
+                        sum += slice[j];
                     }
-                    //if (ret == 1)
-                    //{
-                    //}
-                    //else if (ret == -1)
-                    //{
-                    //}
+                    processed += l + repetitions;
 
-                    basePatternIdx += basePatternIdx < basePatternLength - 1 ? 1 : -3;
-                    ret = basePattern[basePatternIdx];
+                    if (processed + repetitions < length)
+                        slice = numbers.Slice(processed, repetitions);
+                    else if (processed >= length) break;
+                    else
+                        slice = numbers.Slice(processed, length - processed);
 
-                    if (ret == 0)
+                    // subtract
+                    l = slice.Length;
+                    for (int j = 0; j < l; j++)
                     {
-                        processed += repetitions;
-                        basePatternIdx += basePatternIdx < basePatternLength - 1 ? 1 : -3;
-                        ret = basePattern[basePatternIdx];
+                        sum -= slice[j];
                     }
+                    processed += l + repetitions;
                 }
 
-                if (ret == 1)
-                {
-                    for (int j = 0; j < i + 1 && processed < length; j++)
-                    {
-                        sum += numbers[processed++];
-                    }
-                }
-                else if (ret == -1)
-                {
-                    for (int j = 0; j < i + 1 && processed < length; j++)
-                    {
-                        sum -= numbers[processed++];
-                    }
-                }
+                if (i % 10000 == 0) Console.WriteLine(i);
+
+                //while (processed < length - i)
+                //{
+                //    var repetitions = i + 1;
+
+                //    var slice = numbers.Slice(processed, repetitions);
+                //    switch (ret)
+                //    {
+                //        case 1:
+                //            for (int j = 0; j < repetitions; j++)
+                //            {
+                //                sum += slice[j];
+                //            }
+                //            processed += repetitions;
+                //            break;
+                //        case -1:
+                //            for (int j = 0; j < repetitions; j++)
+                //            {
+                //                sum -= slice[j];
+                //            }
+                //            processed += repetitions;
+                //            break;
+                //    }
+
+                //    basePatternIdx += basePatternIdx < basePatternLength - 1 ? 1 : -3;
+                //    ret = basePattern[basePatternIdx];
+
+                //    if (ret == 0)
+                //    {
+                //        processed += repetitions;
+                //        basePatternIdx += basePatternIdx < basePatternLength - 1 ? 1 : -3;
+                //        ret = basePattern[basePatternIdx];
+                //    }
+                //}
+
+                //if (ret == 1)
+                //{
+                //    for (int j = 0; j < i + 1 && processed < length; j++)
+                //    {
+                //        sum += numbers[processed++];
+                //    }
+                //}
+                //else if (ret == -1)
+                //{
+                //    for (int j = 0; j < i + 1 && processed < length; j++)
+                //    {
+                //        sum -= numbers[processed++];
+                //    }
+                //}
 
                 var n = sum.ToString();
                 numbers[i] = (int)(n[n.Length - 1] - '0');
