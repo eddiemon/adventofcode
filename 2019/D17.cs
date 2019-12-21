@@ -26,53 +26,106 @@ namespace aoc
         public object Answer()
         {
             var code = File.ReadAllText("17.in").Split(',').Select(s => BigInteger.Parse(s)).ToArray();
+            code[0] = 2;
+
             var computer = new IntCodeSync(code);
 
-            var scaffolds = new HashSet<Vector2>();
-            int x = 0, y = 0;
+            int rows = 1;
+            while (rows < 36)
+            {
+                var val = (char)computer.Run().Value;
+                Console.Write(val);
+                if (val == '\n') rows++;
+            }
             try
             {
-                var o = computer.Run().Value;
-                while (true)
+                // hand-made
+                var main = "A,A,B,C,B,C,B,C,C,A\n";
+                var a = "R,8,L,4,R,4,R,10,R,8\n";
+                var b = "L,12,L,12,R,8,R,8\n";
+                var c = "R,10,R,4,R,4\n";
+                foreach (var ch in main.ToCharArray())
+                {
+                    var res = computer.Run(ch);
+                }
+                var o = computer.Run();
+                while (o != null)
                 {
                     Console.Write((char)o);
-                    //if (o == (int)'^' || o == (int)'<' || o == (int)'>' || o == (int)'v')
-                    //{
-
-                    //}
-
-                    if (o == (int)'#' || o == (int)'^' || o == (int)'<' || o == (int)'>' || o == (int)'v')
-                    {
-                        scaffolds.Add((x++, y));
-                    }
-                    else if (o == 10) // newline
-                    {
-                        ++y; x = 0;
-                    }
-                    else
-                        ++x;
-
-                    o = computer.Run().Value;
+                    o = computer.Run();
                 }
-            } catch (ComputerHaltedException)
-            {
-
-            }
-            x = 0; y = 0;
-            var intersections = new List<Vector2>();
-            foreach (var p in scaffolds)
-            {
-                var isIntersect = HeadingToVector.Values.Select(d => p + d).All(pd => scaffolds.Contains(pd));
-                if (isIntersect)
+                foreach (var ch in a.ToCharArray())
                 {
-                    intersections.Add(p);
-                    Console.SetCursorPosition(p.x, p.y);
-                    Console.Write('O');
+                    computer.Run(ch);
+                }
+                o = computer.Run();
+                while (o != null)
+                {
+                    Console.Write((char)o);
+                    o = computer.Run();
+                }
+                foreach (var ch in b.ToCharArray())
+                {
+                    computer.Run(ch);
+                }
+                o = computer.Run();
+                while (o != null)
+                {
+                    Console.Write((char)o);
+                    o = computer.Run();
+                }
+                o = computer.Run();
+                while (o != null)
+                {
+                    Console.Write((char)o);
+                    o = computer.Run();
+                }
+                foreach (var ch in c.ToCharArray())
+                {
+                    computer.Run(ch);
+                }
+                o = computer.Run();
+                while (o != null)
+                {
+                    Console.Write((char)o);
+                    o = computer.Run();
+                }
+                computer.Run('n');
+                computer.Run('\n');
+
+                Console.Clear();
+                Console.SetCursorPosition(0, 0);
+
+                computer.Run();
+
+                rows = 1;
+                while (true)
+                {
+                    var val = (long?)computer.Run().GetValueOrDefault(0);
+                    if (val > 0xff) return val;
+
+                    if (val == '\n')
+                        rows++;
+
+                    Console.Write((char)val);
+
+                    if (rows % 34 == 0)
+                    {
+                        Console.ReadLine();
+                        Console.Clear();
+                        Console.SetCursorPosition(0, 0);
+                        val = (int?)computer.Run();
+                        if (val > 0xFF) return val;
+                        rows = 1;
+                    }
                 }
             }
-            Console.SetCursorPosition(0, 100);
+            catch (ComputerHaltedException)
+            {
 
-            return intersections.Select(p => p.x * p.y).Sum();
+            }
+
+            return "error";
         }
     }
 }
