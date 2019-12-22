@@ -56,6 +56,11 @@ namespace aoc
 
         public BigInteger? Run(BigInteger? input = null)
         {
+            return Run(new Queue<BigInteger?>());
+        }
+
+        public BigInteger? Run(Queue<BigInteger?> input)
+        {
             while (true)
             {
                 var opCode = Memory[(int)iptr].ToString("D2");
@@ -86,10 +91,10 @@ namespace aoc
                 }
                 else if (opCode.EndsWith(OpCodeInput))
                 {
-                    if (!input.HasValue) return null;
+                    if (input.Count == 0) return null;
 
                     var modes = ParseParameterModes(parameterModes, 1);
-                    SetValueInMemory(input.Value, iptr + 1, modes[0]);
+                    SetValueInMemory(input.Dequeue().Value, iptr + 1, modes[0]);
                     iptr += 2;
                     return null;
                 }
