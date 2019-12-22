@@ -1,72 +1,77 @@
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
+using System.Text;
 
 namespace aoc
 {
-    public class d22
+    class D22
     {
-        public string Answer { get {
-            
-            var instructions = File.ReadAllText("d2.txt").Split(',').Select(x => int.Parse(x)).ToArray();
-
-            for (int noun = 0; noun < 100; noun++)
-            {
-                for (int verb = 0; verb < 100; verb++)
-                {
-                    var workingMemory = instructions.ToArray();
-                    workingMemory[1] = noun;
-                    workingMemory[2] = verb;
-                    try
-                    {
-                        int result = RunIntCode(workingMemory);
-                        if (result == 19690720)
-                        {
-                            result = 100 * noun + verb;
-                            return result.ToString();;
-                        }
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-
-                }
-            }
-
-            return string.Empty;
-        }}
-
-        int RunIntCode(int[] memory)
+        internal object Answer()
         {
+            var input = File.ReadAllLines("22.in");
 
-            int iptr = 0;
-            while (true)
+            BigInteger cards = 119315717514047;
+            BigInteger shuffles = 101741582076661;
+            BigInteger offsetDiff = 0;
+            BigInteger incrementMultiplier = 1;
+
+            foreach (var l in input)
             {
-                if (memory[iptr] == 1)
+                if (l.StartsWith("deal with"))
                 {
-                    var a = memory[iptr + 1];
-                    var b = memory[iptr + 2];
-                    var outLocation = memory[iptr + 3];
-                    memory[outLocation] = memory[a] + memory[b];
+                    var inc = BigInteger.Parse(l.Substring("deal with increment ".Length));
+                    incrementMultiplier *= inv(inc, cards);
+                    incrementMultiplier %= cards;
                 }
-                else if (memory[iptr] == 2)
+                else if (l.StartsWith("cut"))
                 {
-                    var a = memory[iptr + 1];
-                    var b = memory[iptr + 2];
-                    var outLocation = memory[iptr + 3];
-                    memory[outLocation] = memory[a] * memory[b];
-                }
-                else if (memory[iptr] == 99)
-                {
-                    break;
+                    var c = BigInteger.Parse(l.Substring("cut ".Length));
+                    offsetDiff += c * incrementMultiplier;
+                    offsetDiff %= cards;
                 }
                 else
                 {
-                    throw new System.Exception();
+                    incrementMultiplier *= -1;
+                    incrementMultiplier %= cards;
+                    offsetDiff += incrementMultiplier;
+                    offsetDiff %= cards;
                 }
-                iptr += 4;
             }
-            return memory[0];
+
+            var increment = ModPow(incrementMultiplier, shuffles, cards);
+            var offset = offsetDiff * (1 - increment) * inv((1 - incrementMultiplier) % cards, cards);
+            offset %= cards;
+
+            return (offset + 2020 * increment) % cards;
+        }
+
+        BigInteger inv(BigInteger n, BigInteger mod)
+        {
+            return ModPow(n, mod - 2, mod);
+        }
+
+        BigInteger ModPow(BigInteger @base, BigInteger exp, BigInteger mod)
+        {
+            if (mod == 1) return 0;
+
+            BigInteger res = 1;
+            @base %= mod;
+            while (exp > 0)
+            {
+                if (exp % 2 == 1)
+                {
+                    res *= @base;
+                    res %= mod;
+                }
+
+                exp >>= 1;
+                @base *= @base;
+                @base %= mod;
+            }
+            return res;
         }
     }
 }
