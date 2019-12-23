@@ -99,7 +99,8 @@ namespace aoc
                     var modes = ParseParameterModes(parameterModes, 1);
                     SetValueInMemory(input.Dequeue(), iptr + 1, modes[0]);
                     iptr += 2;
-                    return null;
+                    if (input.Count == 0)
+                        return null;
                 }
                 else if (opCode.EndsWith(OpCodeOutput))
                 {
