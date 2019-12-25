@@ -25,13 +25,13 @@ namespace aoc
 
                         var instructions = new System.Text.StringBuilder();
                         var input = Console.ReadLine().ToUpper();
-                        while (!input.Equals("WALK") && !input.Equals(""))
+                        while (!input.Equals("RUN") && !input.Equals(""))
                         {
                             instructions.Append(input);
                             instructions.Append('\n');
                             input = Console.ReadLine().ToUpper();
                         }
-                        instructions.Append("WALK");
+                        instructions.Append("RUN");
                         instructions.Append('\n');
 
                         computer.Run(new Queue<BigInteger>(instructions.ToString().Select(c => (BigInteger)c)));
