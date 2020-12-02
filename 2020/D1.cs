@@ -8,16 +8,12 @@ public class D1
     {
         var input = File.ReadAllLines("../../../1.in").Select(l => int.Parse(l)).ToList();
 
-        for (int i = 0; i < input.Count; i++)
+        for (int i = 0; i < input.Count - 2; i++)
         {
-            for (int j = 0; j < input.Count; j++)
+            for (int j = i + 1; j < input.Count - 1; j++)
             {
-                if (i == j) continue;
-
-                for (int k = 0; k < input.Count; k++)
+                for (int k = j + 1; k < input.Count; k++)
                 {
-                    if (i == k || j == k) continue;
-
                     var s = input[i] + input[j] + input[k];
                     if (s == 2020)
                     {
