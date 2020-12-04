@@ -5,26 +5,18 @@ using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-var input = File.ReadAllLines("../../../3.in").ToList();
-var treesPerSlope = new List<BigInteger>(5);
+var input = File.ReadAllText("../../../4.in");
 
-treesPerSlope.Add(CountTreesForSlope(1, 1));
-treesPerSlope.Add(CountTreesForSlope(3, 1));
-treesPerSlope.Add(CountTreesForSlope(5, 1));
-treesPerSlope.Add(CountTreesForSlope(7, 1));
-treesPerSlope.Add(CountTreesForSlope(1, 2));
-
-Console.WriteLine(treesPerSlope.Aggregate((a, b) => a * b));
-
-int CountTreesForSlope(int dx, int dy)
+var pIn = input.Split("\n\n");
+int validPassports = 0;
+foreach (var p in pIn)
 {
-    var xx = dx;
-    var trees = 0;
-    for (int y = dy; y < input.Count; y += dy, xx += dx)
-    {
-        var x = xx % 31;
-        if (input[y][x] == '#')
-            trees++;
-    }
-    return trees;
+    var d = p.Replace('\n', ' ').Split(' ').Where(pp => pp != "").ToDictionary(
+        pp => pp.Substring(0, pp.IndexOf(':')),
+        pp => pp.Substring(pp.IndexOf(':') + 1)
+    );
+    if (d.ContainsKey("byr") && d.ContainsKey("iyr") && d.ContainsKey("eyr") && d.ContainsKey("hgt") && d.ContainsKey("hcl") && d.ContainsKey("ecl") && d.ContainsKey("pid"))
+        validPassports++;
 }
+
+Console.WriteLine(validPassports);
