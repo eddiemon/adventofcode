@@ -5,56 +5,41 @@ using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-var input = File.ReadAllText("../../../4.in");
+var input = File.ReadAllLines("../../../5.in");
 
-var pIn = input.Split("\n\n");
-int validPassports = 0;
-foreach (var p in pIn)
+//input = new[]
+//{
+//    "FFFBBBFRRR"
+//};
+
+var maxSeatId = 0;
+
+foreach (var l in input)
 {
-    try
+    var yl = 0;
+    var yh = 127;
+    for (int i = 0; i < 7; i++)
     {
-        var d = p.Replace('\n', ' ').Split(' ').Where(pp => pp != "").ToDictionary(
-            pp => pp.Substring(0, pp.IndexOf(':')),
-            pp => pp.Substring(pp.IndexOf(':') + 1)
-        );
-        if (int.Parse(d["byr"]) < 1920 || int.Parse(d["byr"]) > 2002)
-            throw new Exception();
-        if (int.Parse(d["iyr"]) < 2010 || int.Parse(d["iyr"]) > 2020)
-            throw new Exception();
-        if (int.Parse(d["eyr"]) < 2020 || int.Parse(d["eyr"]) > 2030)
-            throw new Exception();
-        var hgtMatch = Regex.Match(d["hgt"], @"^(?<num>\d+)(?<u>.{2})$");
-        if (!hgtMatch.Success)
-            throw new Exception();
-        var length = int.Parse(hgtMatch.Groups["num"].Value);
-        switch (hgtMatch.Groups["u"].Value)
-        {
-            case "cm":
-                if (length < 150 || length > 193)
-                    throw new Exception();
-                break;
-
-            case "in":
-                if (length < 59 || length > 76)
-                    throw new Exception();
-                break;
-
-            default:
-                throw new Exception();
-        }
-        if (!Regex.IsMatch(d["hcl"], "^#[0-9a-z]{6}$"))
-            throw new Exception();
-
-        var validEcl = new[] { "amb", "blu", "brn", "gry", "grn", "hzl", "oth" };
-        if (!validEcl.Any(ecl => ecl == d["ecl"]))
-            throw new Exception();
-
-        if (!Regex.IsMatch(d["pid"], "^[0-9]{9}$"))
-            throw new Exception();
-
-        validPassports++;
+        var c = l[i];
+        if (c == 'F')
+            yh -= (yh - yl + 1) / 2;
+        else if (c == 'B')
+            yl += (yh - yl + 1) / 2;
     }
-    catch (Exception) { }
-}
 
-Console.WriteLine(validPassports);
+    var xl = 0;
+    var xh = 7;
+    for (int i = 0; i < 3; i++)
+    {
+        var c = l[7 + i];
+        if (c == 'L')
+            xh -= (xh - xl + 1) / 2;
+        else if (c == 'R')
+            xl += (xh - xl + 1) / 2;
+    }
+
+    var seatId = yl * 8 + xl;
+    if (seatId > maxSeatId)
+        maxSeatId = seatId;
+}
+Console.WriteLine(maxSeatId);
