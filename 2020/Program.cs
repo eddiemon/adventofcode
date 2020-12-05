@@ -7,12 +7,8 @@ using System.Text.RegularExpressions;
 
 var input = File.ReadAllLines("../../../5.in");
 
-//input = new[]
-//{
-//    "FFFBBBFRRR"
-//};
-
-var maxSeatId = 0;
+var seats = new bool[128 * 8];
+Array.Fill(seats, false);
 
 foreach (var l in input)
 {
@@ -38,8 +34,17 @@ foreach (var l in input)
             xl += (xh - xl + 1) / 2;
     }
 
-    var seatId = yl * 8 + xl;
-    if (seatId > maxSeatId)
-        maxSeatId = seatId;
+    seats[yl * 8 + xl] = true;
 }
-Console.WriteLine(maxSeatId);
+
+for (int y = 1; y < 127; y++)
+{
+    for (int x = 1; x < 7; x++)
+    {
+        if (!seats[y * 8 + x] && seats[y * 8 + x - 1] && seats[y * 8 + x + 1])
+        {
+            Console.Write(y * 8 + x);
+            return;
+        }
+    }
+}
