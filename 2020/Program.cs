@@ -6,7 +6,7 @@ using System.Numerics;
 using System.Text.RegularExpressions;
 
 var input = File.ReadAllLines("../../../7.in");
-var rules = new List<Rule>();
+var rules = new List<Bag>();
 
 //light red bags contain 1 bright white bag, 2 muted yellow bags.
 {
@@ -25,32 +25,27 @@ var rules = new List<Rule>();
             var c = m.Groups["color"].Value;
             subRules.Add((c, count));
         }
-        rules.Add(new Rule(color, subRules));
+        rules.Add(new Bag(color, subRules));
     }
 }
 
 {
-    var count = 0;
-    foreach (var r in rules)
-    {
-        if (CanContainBag(r, "shiny gold"))
-            count++;
-    }
-    Console.WriteLine(count);
+    var shinyGold = rules.First(r => r.color == "shiny gold");
+    Console.WriteLine(BagsWithinBag(shinyGold) - 1);
 }
 
-bool CanContainBag(Rule rule, string bagColor)
+int BagsWithinBag(Bag bag)
 {
-    if (rule.subRules.Count == 0)
-        return false;
-    if (rule.subRules.Any(r => r.color == bagColor))
-        return true;
-    foreach (var subRule in rule.subRules)
+    if (bag.ContainsBags.Count == 0)
+        return 1;
+
+    var numberOfBags = 1;
+    foreach (var subRule in bag.ContainsBags)
     {
-        if (CanContainBag(rules.First(r => r.color == subRule.color), bagColor))
-            return true;
+        var r = rules.First(r => r.color == subRule.color);
+        numberOfBags += subRule.Count * BagsWithinBag(r);
     }
-    return false;
+    return numberOfBags;
 }
 
-record Rule(string color, List<(string color, int Count)> subRules);
+record Bag(string color, List<(string color, int Count)> ContainsBags);
