@@ -5,41 +5,52 @@ using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-var input = File.ReadAllLines("../../../6.in");
+var input = File.ReadAllLines("../../../7.in");
+var rules = new List<Rule>();
 
-var currentlyAnsweredQuestions = new Dictionary<char, int>();
-var numberOfPeopleInGroup = 0;
-var totalAnsweredQuestions = 0;
-
-foreach (var l in input)
+//light red bags contain 1 bright white bag, 2 muted yellow bags.
 {
-    if (string.IsNullOrEmpty(l))
+    foreach (var i in input)
     {
-        foreach (var (answer, count) in currentlyAnsweredQuestions)
+        var index = i.IndexOf(" bags");
+        var color = i[0..index];
+        index = i.IndexOf("contain ");
+        var a = i[(index + "contain ".Length)..];
+        var b = a.Split(',', '.').Where(aa => aa != "" && aa != "no other bags");
+        var subRules = new List<(string color, int Count)>();
+        foreach (var bb in b)
         {
-            if (count == numberOfPeopleInGroup)
-                totalAnsweredQuestions++;
+            var m = Regex.Match(bb, @"(?<count>\d) (?<color>.*) bag");
+            var count = int.Parse(m.Groups["count"].Value);
+            var c = m.Groups["color"].Value;
+            subRules.Add((c, count));
         }
-
-        currentlyAnsweredQuestions.Clear();
-        numberOfPeopleInGroup = 0;
-        continue;
-    }
-    else
-    {
-        numberOfPeopleInGroup++;
-    }
-
-    for (int i = 0; i < l.Length; i++)
-    {
-        currentlyAnsweredQuestions[l[i]] = currentlyAnsweredQuestions.TryGetValue(l[i], out int count) ? count + 1 : 1;
+        rules.Add(new Rule(color, subRules));
     }
 }
 
-foreach (var (answer, count) in currentlyAnsweredQuestions)
 {
-    if (count == numberOfPeopleInGroup)
-        totalAnsweredQuestions++;
+    var count = 0;
+    foreach (var r in rules)
+    {
+        if (CanContainBag(r, "shiny gold"))
+            count++;
+    }
+    Console.WriteLine(count);
 }
 
-Console.WriteLine(totalAnsweredQuestions);
+bool CanContainBag(Rule rule, string bagColor)
+{
+    if (rule.subRules.Count == 0)
+        return false;
+    if (rule.subRules.Any(r => r.color == bagColor))
+        return true;
+    foreach (var subRule in rule.subRules)
+    {
+        if (CanContainBag(rules.First(r => r.color == subRule.color), bagColor))
+            return true;
+    }
+    return false;
+}
+
+record Rule(string color, List<(string color, int Count)> subRules);
