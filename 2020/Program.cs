@@ -5,47 +5,69 @@ using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-var input = File.ReadAllLines("../../../7.in");
-var rules = new List<Bag>();
+//nop +0
+//acc +1
+//jmp +4
+var input = File.ReadAllLines("../../../8.in");
 
-//light red bags contain 1 bright white bag, 2 muted yellow bags.
+var originalInstructions = new List<Instruction>();
+foreach (var instruction in input)
 {
-    foreach (var i in input)
+    var op = instruction[0..3];
+    var count = int.Parse(instruction[4..]);
+    originalInstructions.Add(new Instruction((OpCode)Enum.Parse(typeof(OpCode), op), count));
+}
+
+for (int i = 0; i < originalInstructions.Count; i++)
+{
+    var modifyInstruction = originalInstructions[i];
+    if (modifyInstruction.op == OpCode.acc)
+        continue;
+
+    var instructions = originalInstructions.ToList();
+    instructions[i] = modifyInstruction.op switch
     {
-        var index = i.IndexOf(" bags");
-        var color = i[0..index];
-        index = i.IndexOf("contain ");
-        var a = i[(index + "contain ".Length)..];
-        var b = a.Split(',', '.').Where(aa => aa != "" && aa != "no other bags");
-        var subRules = new List<(string color, int Count)>();
-        foreach (var bb in b)
+        OpCode.nop => new Instruction(OpCode.jmp, modifyInstruction.count),
+        OpCode.jmp => new Instruction(OpCode.nop, modifyInstruction.count),
+    };
+
+    var accumulator = 0;
+    var visited = new List<int>();
+    var iPtr = 0;
+
+    while (true)
+    {
+        visited.Add(iPtr);
+        var instruction = instructions[iPtr];
+
+        switch (instruction.op)
         {
-            var m = Regex.Match(bb, @"(?<count>\d) (?<color>.*) bag");
-            var count = int.Parse(m.Groups["count"].Value);
-            var c = m.Groups["color"].Value;
-            subRules.Add((c, count));
+            case OpCode.nop:
+                iPtr++;
+                break;
+
+            case OpCode.acc:
+                accumulator += instruction.count;
+                iPtr++;
+                break;
+
+            case OpCode.jmp:
+                iPtr = iPtr + instruction.count;
+                break;
         }
-        rules.Add(new Bag(color, subRules));
+
+        if (iPtr >= instructions.Count)
+        {
+            Console.WriteLine(accumulator);
+            return;
+        }
+
+        if (visited.Contains(iPtr))
+            break;
     }
 }
 
-{
-    var shinyGold = rules.First(r => r.color == "shiny gold");
-    Console.WriteLine(BagsWithinBag(shinyGold) - 1);
-}
+internal enum OpCode
+{ nop, jmp, acc };
 
-int BagsWithinBag(Bag bag)
-{
-    if (bag.ContainsBags.Count == 0)
-        return 1;
-
-    var numberOfBags = 1;
-    foreach (var subRule in bag.ContainsBags)
-    {
-        var r = rules.First(r => r.color == subRule.color);
-        numberOfBags += subRule.Count * BagsWithinBag(r);
-    }
-    return numberOfBags;
-}
-
-record Bag(string color, List<(string color, int Count)> ContainsBags);
+record Instruction(OpCode op, int count);
