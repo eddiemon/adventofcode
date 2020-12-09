@@ -5,69 +5,22 @@ using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-//nop +0
-//acc +1
-//jmp +4
-var input = File.ReadAllLines("../../../8.in");
-
-var originalInstructions = new List<Instruction>();
-foreach (var instruction in input)
+var input = File.ReadAllLines("../../../9.in").Select(n => long.Parse(n)).ToArray();
+const int preamble = 25;
+for (int i = preamble; i < input.Length; i++)
 {
-    var op = instruction[0..3];
-    var count = int.Parse(instruction[4..]);
-    originalInstructions.Add(new Instruction((OpCode)Enum.Parse(typeof(OpCode), op), count));
-}
-
-for (int i = 0; i < originalInstructions.Count; i++)
-{
-    var modifyInstruction = originalInstructions[i];
-    if (modifyInstruction.op == OpCode.acc)
-        continue;
-
-    var instructions = originalInstructions.ToList();
-    instructions[i] = modifyInstruction.op switch
+    var inp = input[(i - preamble)..(i)];
+    var sums = new List<long>();
+    for (int x = 0; x < inp.Length - 1; x++)
     {
-        OpCode.nop => new Instruction(OpCode.jmp, modifyInstruction.count),
-        OpCode.jmp => new Instruction(OpCode.nop, modifyInstruction.count),
-    };
-
-    var accumulator = 0;
-    var visited = new List<int>();
-    var iPtr = 0;
-
-    while (true)
+        for (int y = x + 1; y < inp.Length; y++)
+        {
+            sums.Add(inp[x] + inp[y]);
+        }
+    }
+    if (!sums.Contains(input[i]))
     {
-        visited.Add(iPtr);
-        var instruction = instructions[iPtr];
-
-        switch (instruction.op)
-        {
-            case OpCode.nop:
-                iPtr++;
-                break;
-
-            case OpCode.acc:
-                accumulator += instruction.count;
-                iPtr++;
-                break;
-
-            case OpCode.jmp:
-                iPtr = iPtr + instruction.count;
-                break;
-        }
-
-        if (iPtr >= instructions.Count)
-        {
-            Console.WriteLine(accumulator);
-            return;
-        }
-
-        if (visited.Contains(iPtr))
-            break;
+        Console.WriteLine(input[i]);
+        return;
     }
 }
-
-internal enum OpCode
-{ nop, jmp, acc };
-
-record Instruction(OpCode op, int count);
