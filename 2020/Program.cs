@@ -6,21 +6,17 @@ using System.Numerics;
 using System.Text.RegularExpressions;
 
 var input = File.ReadAllLines("../../../9.in").Select(n => long.Parse(n)).ToArray();
-const int preamble = 25;
-for (int i = preamble; i < input.Length; i++)
+const long number = 138879426;
+int l = 0, h = 1;
+long s = input[l] + input[h];
+
+while (s != number)
 {
-    var inp = input[(i - preamble)..(i)];
-    var sums = new List<long>();
-    for (int x = 0; x < inp.Length - 1; x++)
-    {
-        for (int y = x + 1; y < inp.Length; y++)
-        {
-            sums.Add(inp[x] + inp[y]);
-        }
-    }
-    if (!sums.Contains(input[i]))
-    {
-        Console.WriteLine(input[i]);
-        return;
-    }
+    if (s < number)
+        s += input[++h];
+    else if (s > number)
+        s -= input[l++];
 }
+
+var ii = input[l..(h + 1)];
+Console.WriteLine(ii.Min() + ii.Max());
