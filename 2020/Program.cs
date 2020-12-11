@@ -28,11 +28,29 @@ do
                 {
                     var yy = y + dy;
                     var xx = x + dx;
-                    if (yy < 0 || yy >= input.Length || xx < 0 || xx >= input[0].Length || (yy == y && xx == x))
+
+                    if (yy == y && xx == x)
                         continue;
 
-                    if (input[yy][xx] == '#')
-                        occupiedSeats++;
+                    while (true)
+                    {
+                        if (yy < 0 || yy >= input.Length || xx < 0 || xx >= input[0].Length)
+                            break;
+
+                        if (input[yy][xx] == '#')
+                        {
+                            occupiedSeats++;
+                            break;
+                        }
+
+                        if (input[yy][xx] == 'L')
+                        {
+                            break;
+                        }
+
+                        yy += dy;
+                        xx += dx;
+                    }
                 }
             }
 
@@ -41,7 +59,7 @@ do
                 int ly = y, lx = x;
                 changes.Add(() => input[ly][lx] = '#');
             }
-            else if (input[y][x] == '#' && occupiedSeats >= 4)
+            else if (input[y][x] == '#' && occupiedSeats >= 5)
             {
                 int ly = y, lx = x;
                 changes.Add(() => input[ly][lx] = 'L');
@@ -53,6 +71,16 @@ do
     {
         change.Invoke();
     }
+
+    //for (int y = 0; y < input.Length; y++)
+    //{
+    //    for (int x = 0; x < input[0].Length; x++)
+    //    {
+    //        Console.Write(input[y][x]);
+    //    }
+    //    Console.WriteLine();
+    //}
+    //Console.WriteLine();
 }
 while (changes.Count != 0);
 
