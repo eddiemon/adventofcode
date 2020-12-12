@@ -5,94 +5,89 @@ using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-var input = File.ReadAllLines("../../../11.in").Select(l => l.ToCharArray()).ToArray();
-
-var changes = new List<Action>();
-int rounds = -1;
-do
+var input = File.ReadAllLines("../../../12.in").Select(l =>
 {
-    rounds++;
-    changes = new List<Action>();
+    var m = Regex.Match(l, "(?<dir>.)(?<num>\\d+)");
+    return new Instruction(m.Groups["dir"].Value[0], int.Parse(m.Groups["num"].Value));
+});
 
-    for (int y = 0; y < input.Length; y++)
+int x = 0, y = 0;
+int dx = 1, dy = 0;
+
+foreach (var instr in input)
+{
+    if (instr.direction == 'N')
+        y -= instr.value;
+    else if (instr.direction == 'E')
+        x += instr.value;
+    else if (instr.direction == 'S')
+        y += instr.value;
+    else if (instr.direction == 'W')
+        x -= instr.value;
+    else if (instr.direction == 'F')
     {
-        for (int x = 0; x < input[0].Length; x++)
+        y += dy * instr.value;
+        x += dx * instr.value;
+    }
+    else if (instr.direction == 'B')
+    {
+        y -= dy * instr.value;
+        x -= dx * instr.value;
+    }
+    else if (instr.direction == 'R')
+    {
+        for (int i = 0; i < instr.value / 90; i++)
         {
-            if (input[y][x] == '.')
-                continue;
-
-            int occupiedSeats = 0;
-            for (int dy = -1; dy < 2; dy++)
+            if (dx == 1)
             {
-                for (int dx = -1; dx < 2; dx++)
-                {
-                    var yy = y + dy;
-                    var xx = x + dx;
-
-                    if (yy == y && xx == x)
-                        continue;
-
-                    while (true)
-                    {
-                        if (yy < 0 || yy >= input.Length || xx < 0 || xx >= input[0].Length)
-                            break;
-
-                        if (input[yy][xx] == '#')
-                        {
-                            occupiedSeats++;
-                            break;
-                        }
-
-                        if (input[yy][xx] == 'L')
-                        {
-                            break;
-                        }
-
-                        yy += dy;
-                        xx += dx;
-                    }
-                }
+                dx = 0;
+                dy = 1;
             }
-
-            if (input[y][x] == 'L' && occupiedSeats == 0)
+            else if (dy == 1)
             {
-                int ly = y, lx = x;
-                changes.Add(() => input[ly][lx] = '#');
+                dx = -1;
+                dy = 0;
             }
-            else if (input[y][x] == '#' && occupiedSeats >= 5)
+            else if (dx == -1)
             {
-                int ly = y, lx = x;
-                changes.Add(() => input[ly][lx] = 'L');
+                dx = 0;
+                dy = -1;
+            }
+            else if (dy == -1)
+            {
+                dx = 1;
+                dy = 0;
             }
         }
     }
-
-    foreach (var change in changes)
+    else if (instr.direction == 'L')
     {
-        change.Invoke();
+        for (int i = 0; i < instr.value / 90; i++)
+        {
+            if (dx == 1)
+            {
+                dx = 0;
+                dy = -1;
+            }
+            else if (dy == 1)
+            {
+                dx = 1;
+                dy = 0;
+            }
+            else if (dx == -1)
+            {
+                dx = 0;
+                dy = 1;
+            }
+            else if (dy == -1)
+            {
+                dx = -1;
+                dy = 0;
+            }
+        }
     }
-
-    //for (int y = 0; y < input.Length; y++)
-    //{
-    //    for (int x = 0; x < input[0].Length; x++)
-    //    {
-    //        Console.Write(input[y][x]);
-    //    }
-    //    Console.WriteLine();
-    //}
-    //Console.WriteLine();
-}
-while (changes.Count != 0);
-
-var count = 0;
-for (int y = 0; y < input.Length; y++)
-{
-    for (int x = 0; x < input[0].Length; x++)
-    {
-        if (input[y][x] == '#')
-            count++;
-    }
 }
 
-Console.WriteLine(rounds);
-Console.WriteLine(count);
+Console.WriteLine(Math.Abs(x + y));
+
+record Instruction(char direction, int value);
