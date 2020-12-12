@@ -12,43 +12,52 @@ var input = File.ReadAllLines("../../../12.in").Select(l =>
 });
 
 int x = 0, y = 0;
-int wx = 10, wy = -1;
+var d = new int[] { 0, 1, 0, -1 };
+int dx = 1, dy = 0;
 
 foreach (var instr in input)
 {
     if (instr.direction == 'N')
-        wy -= instr.value;
+        y -= instr.value;
     else if (instr.direction == 'E')
-        wx += instr.value;
+        x += instr.value;
     else if (instr.direction == 'S')
-        wy += instr.value;
+        y += instr.value;
     else if (instr.direction == 'W')
-        wx -= instr.value;
+        x -= instr.value;
     else if (instr.direction == 'F')
     {
-        y += wy * instr.value;
-        x += wx * instr.value;
+        y += d[dy] * instr.value;
+        x += d[dx] * instr.value;
+    }
+    else if (instr.direction == 'B')
+    {
+        y -= d[dy] * instr.value;
+        x -= d[dx] * instr.value;
     }
     else if (instr.direction == 'R')
     {
         for (int i = 0; i < instr.value / 90; i++)
         {
-            var oldY = wy;
-            wy = wx;
-            wx = -oldY;
+            dx = mod(dx + 1, d.Length);
+            dy = mod(dy + 1, d.Length);
         }
     }
     else if (instr.direction == 'L')
     {
         for (int i = 0; i < instr.value / 90; i++)
         {
-            var oldY = wy;
-            wy = -wx;
-            wx = oldY;
+            dx = mod(dx - 1, d.Length);
+            dy = mod(dy - 1, d.Length);
         }
     }
 }
 
 Console.WriteLine(Math.Abs(x + y));
+
+int mod(int x, int m)
+{
+    return (x % m + m) % m;
+}
 
 record Instruction(char direction, int value);
