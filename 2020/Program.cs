@@ -7,7 +7,40 @@ using System.Text.RegularExpressions;
 
 var input = File.ReadAllLines("../../../13.in");
 var estimatedTime = long.Parse(input[0]);
-var busIds = input[1].Split(',').Where(c => c != "x").Select(c => long.Parse(c)).ToArray();
+var busIds = input[1].Split(',').Select(c => c == "x" ? -1 : long.Parse(c)).ToArray();
 
-var bus = busIds.Select(id => (id, time: id - estimatedTime % id)).OrderBy(n => n.time).First();
-Console.WriteLine(bus.id * bus.time);
+foreach (var n in InfiniteMultiplies(busIds[0]))
+{
+    var t = n;
+    bool cont = false;
+
+    for (int i = 1; i < busIds.Length; i++)
+    {
+        t++;
+        if (busIds[i] == -1)
+            continue;
+
+        var mod = t % busIds[i];
+        if (mod != 0)
+        {
+            cont = true;
+            break;
+        }
+    }
+
+    if (!cont)
+    {
+        Console.WriteLine(n);
+        break;
+    }
+}
+
+IEnumerable<long> InfiniteMultiplies(long n)
+{
+    long nn = 0;
+    while (true)
+    {
+        nn += n;
+        yield return nn;
+    }
+}
