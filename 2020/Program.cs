@@ -9,14 +9,17 @@ var input = File.ReadAllLines("../../../13.in");
 var estimatedTime = long.Parse(input[0]);
 var busIds = input[1].Split(',').Select(c => c == "x" ? -1 : long.Parse(c)).ToArray();
 
-foreach (var n in InfiniteMultiplies(busIds[0]))
+var maxBus = busIds.Select((id, n) => (id, n)).OrderByDescending(x => x.id).First();
+
+foreach (var n in InfiniteMultiplies(maxBus.id))
 {
-    var t = n;
+    var t = n - maxBus.n - 1;
     bool cont = false;
 
-    for (int i = 1; i < busIds.Length; i++)
+    for (int i = 0; i < busIds.Length; i++)
     {
         t++;
+
         if (busIds[i] == -1)
             continue;
 
@@ -30,7 +33,7 @@ foreach (var n in InfiniteMultiplies(busIds[0]))
 
     if (!cont)
     {
-        Console.WriteLine(n);
+        Console.WriteLine(n - maxBus.n);
         break;
     }
 }
