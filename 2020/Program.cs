@@ -6,44 +6,49 @@ using System.Numerics;
 using System.Text.RegularExpressions;
 
 var input = File.ReadAllLines("../../../13.in");
+
 var estimatedTime = long.Parse(input[0]);
-var busIds = input[1].Split(',').Select(c => c == "x" ? -1 : long.Parse(c)).ToArray();
+var busIds = input[1].Split(',').Select((c, idx) => (n: long.TryParse(c, out var l) ? l : -1, idx: idx)).Where(b => b.n != -1).ToArray();
 
-var maxBus = busIds.Select((id, n) => (id, n)).OrderByDescending(x => x.id).First();
-
-foreach (var n in InfiniteMultiplies(maxBus.id))
+// Use Chinese Remainder Theorem
+var N = busIds.Select(b => b.n).Aggregate((n1, n2) => n1 * n2);
+var result = busIds.Select(b =>
 {
-    var t = n - maxBus.n - 1;
-    bool cont = false;
+    var ni = b.n;
+    var Ni = N / ni;
+    var bi = (ni - b.idx) % ni;
+    if (bi == 0)
+        return 0;
 
-    for (int i = 0; i < busIds.Length; i++)
-    {
-        t++;
+    var x = inv(Ni, ni);
 
-        if (busIds[i] == -1)
-            continue;
+    return bi * Ni * x;
+}).Aggregate((n1, n2) => n1 + n2);
 
-        var mod = t % busIds[i];
-        if (mod != 0)
-        {
-            cont = true;
-            break;
-        }
-    }
+Console.WriteLine(result % N);
 
-    if (!cont)
-    {
-        Console.WriteLine(n - maxBus.n);
-        break;
-    }
+BigInteger inv(BigInteger n, BigInteger mod)
+{
+    return ModPow(n, mod - 2, mod);
 }
 
-IEnumerable<long> InfiniteMultiplies(long n)
+BigInteger ModPow(BigInteger @base, BigInteger exp, BigInteger mod)
 {
-    long nn = 0;
-    while (true)
+    if (mod == 1) return 0;
+
+    BigInteger res = 1;
+    @base %= mod;
+    while (exp > 0)
     {
-        nn += n;
-        yield return nn;
+        if (exp % 2 == 1)
+        {
+            res *= @base;
+            res %= mod;
+        }
+
+        exp >>= 1;
+        @base *= @base;
+        @base %= mod;
     }
+    return res;
 }
