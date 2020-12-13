@@ -7,7 +7,7 @@ using System.Text;
 
 namespace aoc
 {
-    class D22
+    internal class D22
     {
         internal object Answer()
         {
@@ -23,7 +23,7 @@ namespace aoc
                 if (l.StartsWith("deal with"))
                 {
                     var inc = BigInteger.Parse(l.Substring("deal with increment ".Length));
-                    incrementMultiplier *= inv(inc, cards);
+                    incrementMultiplier *= Maths.ModularMultiplicativeInverse(inc, cards);
                     incrementMultiplier %= cards;
                 }
                 else if (l.StartsWith("cut"))
@@ -41,37 +41,11 @@ namespace aoc
                 }
             }
 
-            var increment = ModPow(incrementMultiplier, shuffles, cards);
-            var offset = offsetDiff * (1 - increment) * inv((1 - incrementMultiplier) % cards, cards);
+            var increment = Maths.ModularExponentiation(incrementMultiplier, shuffles, cards);
+            var offset = offsetDiff * (1 - increment) * Maths.ModularMultiplicativeInverse((1 - incrementMultiplier) % cards, cards);
             offset %= cards;
 
             return (offset + 2020 * increment) % cards;
-        }
-
-        BigInteger inv(BigInteger n, BigInteger mod)
-        {
-            return ModPow(n, mod - 2, mod);
-        }
-
-        BigInteger ModPow(BigInteger @base, BigInteger exp, BigInteger mod)
-        {
-            if (mod == 1) return 0;
-
-            BigInteger res = 1;
-            @base %= mod;
-            while (exp > 0)
-            {
-                if (exp % 2 == 1)
-                {
-                    res *= @base;
-                    res %= mod;
-                }
-
-                exp >>= 1;
-                @base *= @base;
-                @base %= mod;
-            }
-            return res;
         }
     }
 }

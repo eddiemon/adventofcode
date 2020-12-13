@@ -20,35 +20,9 @@ var result = busIds.Select(b =>
     if (bi == 0)
         return 0;
 
-    var x = inv(Ni, ni);
+    var x = Maths.ModularMultiplicativeInverse(Ni, ni);
 
     return bi * Ni * x;
 }).Aggregate((n1, n2) => n1 + n2);
 
 Console.WriteLine(result % N);
-
-BigInteger inv(BigInteger n, BigInteger mod)
-{
-    return ModPow(n, mod - 2, mod);
-}
-
-BigInteger ModPow(BigInteger @base, BigInteger exp, BigInteger mod)
-{
-    if (mod == 1) return 0;
-
-    BigInteger res = 1;
-    @base %= mod;
-    while (exp > 0)
-    {
-        if (exp % 2 == 1)
-        {
-            res *= @base;
-            res %= mod;
-        }
-
-        exp >>= 1;
-        @base *= @base;
-        @base %= mod;
-    }
-    return res;
-}
