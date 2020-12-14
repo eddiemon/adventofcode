@@ -5,24 +5,44 @@ using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-var input = File.ReadAllLines("../../../13.in");
+var input = File.ReadAllLines("../../../14.in");
 
-var estimatedTime = long.Parse(input[0]);
-var busIds = input[1].Split(',').Select((c, idx) => (n: long.TryParse(c, out var l) ? l : -1, idx: idx)).Where(b => b.n != -1).ToArray();
+var mem = new Dictionary<ulong, ulong>();
 
-// Use Chinese Remainder Theorem
-var N = busIds.Select(b => b.n).Aggregate((n1, n2) => n1 * n2);
-var result = busIds.Select(b =>
+ulong clearBits = 0UL;
+ulong setBits = 0UL;
+var maskR = new Regex("^mask = (?<mask>.+)$");
+var memR = new Regex("^mem\\[(?<addr>\\d+)\\] = (?<num>\\d+)$");
+foreach (var l in input)
 {
-    var ni = b.n;
-    var Ni = N / ni;
-    var bi = (ni - b.idx) % ni;
-    if (bi == 0)
-        return 0;
+    var maskM = maskR.Match(l);
+    var memM = memR.Match(l);
+    if (maskM.Success)
+    {
+        clearBits = ulong.MaxValue;
+        setBits = 0;
+        int exp = 35;
+        foreach (var c in maskM.Groups["mask"].Value)
+        {
+            if (c == '1')
+                setBits += 1UL << exp;
+            if (c == '0')
+                clearBits -= 1UL << exp;
+            exp--;
+        }
+    }
+    else if (memM.Success)
+    {
+        var addr = ulong.Parse(memM.Groups["addr"].Value);
+        var num = ulong.Parse(memM.Groups["num"].Value);
+        num |= setBits;
+        num &= clearBits;
+        mem[addr] = num;
+    }
+    else
+    {
+        System.Diagnostics.Debug.Fail("");
+    }
+}
 
-    var x = Maths.ModularMultiplicativeInverse(Ni, ni);
-
-    return bi * Ni * x;
-}).Aggregate((n1, n2) => n1 + n2);
-
-Console.WriteLine(result % N);
+Console.WriteLine(mem.Values.Aggregate((k1, k2) => k1 + k2));
