@@ -6,80 +6,45 @@ using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 
-var input = File.ReadAllLines("../../../14.in");
+//var input = File.ReadAllLines("../../../14.in");
+var spoken = new Dictionary<int, List<int>>();
 
-var mem = new Dictionary<string, ulong>();
+int turn = 1;
+int lastSpoken = 0;
+Say(0);
+Say(5);
+Say(4);
+Say(1);
+Say(10);
+Say(14);
+Say(7);
 
-string mask = string.Empty;
+//Say(0);
+//Say(3);
+//Say(6);
 
-var sb = new StringBuilder();
-
-var maskR = new Regex("^mask = (?<mask>.+)$");
-var memR = new Regex("^mem\\[(?<addr>\\d+)\\] = (?<num>\\d+)$");
-foreach (var l in input)
+while (turn < 30000000)
 {
-    var maskM = maskR.Match(l);
-    var memM = memR.Match(l);
-    if (maskM.Success)
-    {
-        mask = maskM.Groups["mask"].Value;
-    }
-    else if (memM.Success)
-    {
-        var addr = long.Parse(memM.Groups["addr"].Value);
-        var bitStr = Convert.ToString(addr, 2);
-        int i = bitStr.Length - 1;
-        for (int j = mask.Length - 1; j >= 0; j--)
-        {
-            if (mask[j] == 'X')
-                sb.Append('X');
-            else if (mask[j] == '1')
-                sb.Append('1');
-            else if (i >= 0)
-                sb.Append(bitStr[i]);
-            else
-                sb.Append('0');
-            i--;
-        }
-        var fullAddr = new string(sb.ToString().Reverse().ToArray());
-        sb.Clear();
-
-        var num = ulong.Parse(memM.Groups["num"].Value);
-        WriteValueToMem(fullAddr, num);
-    }
-    else
-    {
-        System.Diagnostics.Debug.Fail("");
-    }
+    Say(WhatToSay());
 }
 
-void WriteValueToMem(string addr, ulong num)
-{
-    int xs = 0;
-    foreach (var c in addr)
-    {
-        if (c == 'X') xs++;
-    }
+Console.WriteLine(WhatToSay());
 
-    var max = (long)Math.Pow(2, xs);
-    for (var i = 0; i < max; i++)
-    {
-        var ss = Convert.ToString(i, 2);
-        int j = ss.Length - 1;
-        foreach (var c in addr.Reverse())
-        {
-            if (c == 'X')
-                if (j >= 0)
-                    sb.Append(ss[j--]);
-                else
-                    sb.Append('0');
-            else
-                sb.Append(c);
-        }
-        var newAddr = new string(sb.ToString().Reverse().ToArray());
-        mem[newAddr] = num;
-        sb.Clear();
-    }
+int WhatToSay()
+{
+    if (spoken[lastSpoken].Count == 1)
+        return 0;
+    var last = spoken[lastSpoken][^1];
+    var secondLast = spoken[lastSpoken][^2];
+    return last - secondLast;
 }
 
-Console.WriteLine(mem.Values.Aggregate((k1, k2) => k1 + k2));
+void Say(int n)
+{
+    if (!spoken.ContainsKey(n))
+        spoken[n] = new List<int>();
+
+    spoken[n].Add(turn);
+    lastSpoken = n;
+    turn++;
+}
