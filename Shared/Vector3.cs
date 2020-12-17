@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace aoc
 {
-    public struct Vector3 : IEquatable<Vector3>
+    public class Vector3 : IEquatable<Vector3>
     {
         public int x;
         public int y;
@@ -27,11 +28,13 @@ namespace aoc
             return x == other.x && y == other.y && z == other.z;
         }
 
-        public override bool Equals(object other) {
+        public override bool Equals(object other)
+        {
             return other is Vector3 v ? Equals(v) : false;
         }
 
-        public override int GetHashCode() {
+        public override int GetHashCode()
+        {
             return HashCode.Combine(x, y, z);
         }
 
@@ -79,6 +82,23 @@ namespace aoc
             return Math.Abs(x - other.x) +
                 Math.Abs(y - other.y) +
                 Math.Abs(z - other.z);
+        }
+
+        public IEnumerable<Vector3> GetNeighbours()
+        {
+            for (int dz = -1; dz <= 1; dz++)
+            {
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    for (int dx = -1; dx <= 1; dx++)
+                    {
+                        if (dz == 0 && dy == 0 && dx == 0)
+                            continue;
+
+                        yield return new Vector3(x + dx, y + dy, z + dz);
+                    }
+                }
+            }
         }
 
         public override string ToString() => $"({x},{y},{z})";

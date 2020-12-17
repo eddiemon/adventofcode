@@ -2,93 +2,97 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 
-var input = File.ReadAllLines("../../../16.in");
+using aoc;
 
-var readingMyTicket = false;
-var readingNearbyTickets = false;
+var input = File.ReadAllLines("../../../17.in");
 
-var rules = new Dictionary<string, Func<int, bool>>();
-
-int[] myTicket = new int[0];
-var nearbyTickets = new List<int[]>();
-
-foreach (var l in input)
+var activeStates = new HashSet<Vector3>();
+for (int y = 0; y < input.Length; y++)
 {
-    if (string.IsNullOrEmpty(l))
-        continue;
-    if (l == "your ticket:")
+    for (int x = 0; x < input[y].Length; x++)
     {
-        readingMyTicket = true;
-        continue;
-    }
-    if (l == "nearby tickets:")
-    {
-        readingNearbyTickets = true;
-        continue;
-    }
-
-    if (readingNearbyTickets)
-    {
-        var t = l.Split(',').Select(i => int.Parse(i)).ToArray();
-        nearbyTickets.Add(t);
-    }
-    else if (readingMyTicket)
-    {
-        var t = l.Split(',').Select(i => int.Parse(i)).ToArray();
-        myTicket = t;
-    }
-    else
-    {
-        var m = Regex.Match(l, @"^(?<rule>.+): (?<min1>\d+)\-(?<max1>\d+) or (?<min2>\d+)\-(?<max2>\d+)$");
-        var rule = m.Groups["rule"].Value;
-        var min1 = int.Parse(m.Groups["min1"].Value);
-        var max1 = int.Parse(m.Groups["max1"].Value);
-        var min2 = int.Parse(m.Groups["min2"].Value);
-        var max2 = int.Parse(m.Groups["max2"].Value);
-        Func<int, bool> validation = (int n) => (n >= min1 && n <= max1) || (n >= min2 && n <= max2);
-        rules.Add(rule, validation);
+        if (input[y][x] == '#')
+            activeStates.Add(new Vector3(x, y, 0));
     }
 }
 
-var validNearbyTickets = nearbyTickets.Where(t => TicketIsValid(t)).ToList();
-
-var validations = rules.Select(kvp => kvp.Value).ToList();
-
-var columnValidators = new Dictionary<Func<int, bool>, int>();
-while (validations.Count > 0)
+for (int i = 0; i < 6; i++)
 {
-    for (int i = 0; i < myTicket.Length; i++)
+    //print(activeStates);
+
+    var minX = activeStates.Min(k => k.x) - 1;
+    var maxX = activeStates.Max(k => k.x) + 1;
+    var minY = activeStates.Min(k => k.y) - 1;
+    var maxY = activeStates.Max(k => k.y) + 1;
+    var minZ = activeStates.Min(k => k.z) - 1;
+    var maxZ = activeStates.Max(k => k.z) + 1;
+    var transforms = new List<Action>();
+
+    for (int z = minZ; z <= maxZ; z++)
     {
-        var fieldIsDepartureField = validations.Where(v => validNearbyTickets.All(t => v(t[i]))).ToList();
-        if (fieldIsDepartureField.Count == 1)
+        for (int y = minY; y <= maxY; y++)
         {
-            validations.Remove(fieldIsDepartureField.First());
-            columnValidators.Add(fieldIsDepartureField.First(), i);
-            break;
+            for (int x = minX; x <= maxX; x++)
+            {
+                var v = new Vector3(x, y, z);
+                var neighbours = new HashSet<Vector3>(v.GetNeighbours());
+
+                var activeNeighbours = neighbours.Where(n => activeStates.Contains(n)).Count();
+                if (activeStates.Contains(v))
+                {
+                    if (activeNeighbours < 2 || activeNeighbours > 3)
+                        transforms.Add(() => activeStates.Remove(v));
+                }
+                else if (activeNeighbours == 3)
+                {
+                    transforms.Add(() => activeStates.Add(v));
+                }
+            }
         }
     }
-}
 
-var departureValidations = rules.Where(kvp => kvp.Key.Contains("departure")).Select(kvp => kvp.Value).ToList();
-var product = 1L;
-foreach (var validation in departureValidations)
-{
-    var column = columnValidators[validation];
-    product *= myTicket[column];
-}
-Console.WriteLine(product);
-
-bool TicketIsValid(int[] t)
-{
-    foreach (var n in t)
+    foreach (var transform in transforms)
     {
-        var isValid = rules.Values.Any(valid => valid(n));
-        if (!isValid)
-            return false;
+        transform.Invoke();
     }
-    return true;
+}
+
+Console.WriteLine(activeStates.Count());
+
+void print(HashSet<Vector3> activeStates)
+{
+    var minX = activeStates.Min(k => k.x);
+    var maxX = activeStates.Max(k => k.x);
+    var minY = activeStates.Min(k => k.y);
+    var maxY = activeStates.Max(k => k.y);
+    var minZ = activeStates.Min(k => k.z);
+    var maxZ = activeStates.Max(k => k.z);
+    for (int z = minZ; z <= maxZ; z++)
+    {
+        Console.WriteLine($"z={z}");
+        Console.Write("  ");
+        for (int xx = minX; xx <= maxX; xx++)
+        {
+            Console.Write(xx);
+        }
+        Console.WriteLine();
+        for (int y = minY; y <= maxY; y++)
+        {
+            Console.Write($"{y} ");
+            for (int x = minX; x <= maxX; x++)
+            {
+                var v = new Vector3(x, y, z);
+                if (activeStates.Contains(v))
+                    Console.Write('#');
+                else
+                    Console.Write('.');
+            }
+            Console.WriteLine();
+        }
+        Console.WriteLine();
+    }
+    Console.WriteLine();
 }
