@@ -9,15 +9,18 @@ using aoc;
 
 var input = File.ReadAllLines("../../../17.in");
 
-var activeStates = new HashSet<Vector3>();
+var activeStates = new HashSet<Vector4>();
 for (int y = 0; y < input.Length; y++)
 {
     for (int x = 0; x < input[y].Length; x++)
     {
         if (input[y][x] == '#')
-            activeStates.Add(new Vector3(x, y, 0));
+            activeStates.Add(new Vector4(x, y));
     }
 }
+
+var stopwatch = new System.Diagnostics.Stopwatch();
+stopwatch.Start();
 
 for (int i = 0; i < 6; i++)
 {
@@ -29,26 +32,31 @@ for (int i = 0; i < 6; i++)
     var maxY = activeStates.Max(k => k.y) + 1;
     var minZ = activeStates.Min(k => k.z) - 1;
     var maxZ = activeStates.Max(k => k.z) + 1;
+    var minT = activeStates.Min(k => k.t) - 1;
+    var maxT = activeStates.Max(k => k.t) + 1;
     var transforms = new List<Action>();
 
-    for (int z = minZ; z <= maxZ; z++)
+    for (int t = minT; t <= maxT; t++)
     {
-        for (int y = minY; y <= maxY; y++)
+        for (int z = minZ; z <= maxZ; z++)
         {
-            for (int x = minX; x <= maxX; x++)
+            for (int y = minY; y <= maxY; y++)
             {
-                var v = new Vector3(x, y, z);
-                var neighbours = new HashSet<Vector3>(v.GetNeighbours());
+                for (int x = minX; x <= maxX; x++)
+                {
+                    var v = new Vector4(x, y, z, t);
+                    var neighbours = v.GetNeighbours();
 
-                var activeNeighbours = neighbours.Where(n => activeStates.Contains(n)).Count();
-                if (activeStates.Contains(v))
-                {
-                    if (activeNeighbours < 2 || activeNeighbours > 3)
-                        transforms.Add(() => activeStates.Remove(v));
-                }
-                else if (activeNeighbours == 3)
-                {
-                    transforms.Add(() => activeStates.Add(v));
+                    var activeNeighbours = neighbours.Where(n => activeStates.Contains(n)).Count();
+                    if (activeStates.Contains(v))
+                    {
+                        if (activeNeighbours < 2 || activeNeighbours > 3)
+                            transforms.Add(() => activeStates.Remove(v));
+                    }
+                    else if (activeNeighbours == 3)
+                    {
+                        transforms.Add(() => activeStates.Add(v));
+                    }
                 }
             }
         }
@@ -60,9 +68,11 @@ for (int i = 0; i < 6; i++)
     }
 }
 
+stopwatch.Stop();
+Console.WriteLine(stopwatch.ElapsedMilliseconds);
 Console.WriteLine(activeStates.Count());
 
-void print(HashSet<Vector3> activeStates)
+void print(HashSet<Vector4> activeStates)
 {
     var minX = activeStates.Min(k => k.x);
     var maxX = activeStates.Max(k => k.x);
@@ -70,29 +80,27 @@ void print(HashSet<Vector3> activeStates)
     var maxY = activeStates.Max(k => k.y);
     var minZ = activeStates.Min(k => k.z);
     var maxZ = activeStates.Max(k => k.z);
-    for (int z = minZ; z <= maxZ; z++)
+    var minT = activeStates.Min(k => k.t) - 1;
+    var maxT = activeStates.Max(k => k.t) + 1;
+    for (int t = minT; t <= maxT; t++)
     {
-        Console.WriteLine($"z={z}");
-        Console.Write("  ");
-        for (int xx = minX; xx <= maxX; xx++)
+        for (int z = minZ; z <= maxZ; z++)
         {
-            Console.Write(xx);
-        }
-        Console.WriteLine();
-        for (int y = minY; y <= maxY; y++)
-        {
-            Console.Write($"{y} ");
-            for (int x = minX; x <= maxX; x++)
+            Console.WriteLine($"z={z},t={t}");
+            for (int y = minY; y <= maxY; y++)
             {
-                var v = new Vector3(x, y, z);
-                if (activeStates.Contains(v))
-                    Console.Write('#');
-                else
-                    Console.Write('.');
+                for (int x = minX; x <= maxX; x++)
+                {
+                    var v = new Vector4(x, y, z, t);
+                    if (activeStates.Contains(v))
+                        Console.Write('#');
+                    else
+                        Console.Write('.');
+                }
+                Console.WriteLine();
             }
             Console.WriteLine();
         }
         Console.WriteLine();
     }
-    Console.WriteLine();
 }
