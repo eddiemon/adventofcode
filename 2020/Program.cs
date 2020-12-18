@@ -7,100 +7,71 @@ using System.Text.RegularExpressions;
 
 using aoc;
 
-var input = File.ReadAllLines("../../../17.in");
+var input = File.ReadAllLines("../../../18.in");
 
-var activeStates = new HashSet<Vector4>();
-for (int y = 0; y < input.Length; y++)
+var sum = input.Select(i => RecursiveForwardEvaluate(i).result).Sum();
+
+Console.WriteLine(sum);
+
+(int eaten, long result) RecursiveForwardEvaluate(ReadOnlySpan<char> v)
 {
-    for (int x = 0; x < input[y].Length; x++)
+    var nums = new Queue<long>();
+    var ops = new Queue<char>();
+    var numBuilder = new StringBuilder();
+    int i = 0;
+    for (; i < v.Length; i++)
     {
-        if (input[y][x] == '#')
-            activeStates.Add(new Vector4(x, y));
-    }
-}
-
-var stopwatch = new System.Diagnostics.Stopwatch();
-stopwatch.Start();
-
-for (int i = 0; i < 6; i++)
-{
-    //print(activeStates);
-
-    var minX = activeStates.Min(k => k.x) - 1;
-    var maxX = activeStates.Max(k => k.x) + 1;
-    var minY = activeStates.Min(k => k.y) - 1;
-    var maxY = activeStates.Max(k => k.y) + 1;
-    var minZ = activeStates.Min(k => k.z) - 1;
-    var maxZ = activeStates.Max(k => k.z) + 1;
-    var minT = activeStates.Min(k => k.t) - 1;
-    var maxT = activeStates.Max(k => k.t) + 1;
-    var transforms = new List<Action>();
-
-    for (int t = minT; t <= maxT; t++)
-    {
-        for (int z = minZ; z <= maxZ; z++)
+        if (v[i] >= '0' && v[i] <= '9')
         {
-            for (int y = minY; y <= maxY; y++)
-            {
-                for (int x = minX; x <= maxX; x++)
-                {
-                    var v = new Vector4(x, y, z, t);
-                    var neighbours = v.GetNeighbours();
+            numBuilder.Append(v[i]);
+            continue;
+        }
 
-                    var activeNeighbours = neighbours.Where(n => activeStates.Contains(n)).Count();
-                    if (activeStates.Contains(v))
-                    {
-                        if (activeNeighbours < 2 || activeNeighbours > 3)
-                            transforms.Add(() => activeStates.Remove(v));
-                    }
-                    else if (activeNeighbours == 3)
-                    {
-                        transforms.Add(() => activeStates.Add(v));
-                    }
-                }
-            }
+        if (numBuilder.Length > 0)
+        {
+            nums.Enqueue(long.Parse(numBuilder.ToString()));
+            numBuilder.Clear();
+        }
+
+        if (v[i] == '+' || v[i] == '*')
+        {
+            ops.Enqueue(v[i]);
+            continue;
+        }
+
+        if (v[i] == '(')
+        {
+            var (eaten, result) = RecursiveForwardEvaluate(v[(i + 1)..]);
+            nums.Enqueue(result);
+            i += eaten;
+            continue;
+        }
+
+        if (v[i] == ')')
+        {
+            i++;
+            break;
         }
     }
 
-    foreach (var transform in transforms)
+    if (numBuilder.Length > 0)
     {
-        transform.Invoke();
+        nums.Enqueue(int.Parse(numBuilder.ToString()));
+        numBuilder.Clear();
     }
-}
 
-stopwatch.Stop();
-Console.WriteLine(stopwatch.ElapsedMilliseconds);
-Console.WriteLine(activeStates.Count());
-
-void print(HashSet<Vector4> activeStates)
-{
-    var minX = activeStates.Min(k => k.x);
-    var maxX = activeStates.Max(k => k.x);
-    var minY = activeStates.Min(k => k.y);
-    var maxY = activeStates.Max(k => k.y);
-    var minZ = activeStates.Min(k => k.z);
-    var maxZ = activeStates.Max(k => k.z);
-    var minT = activeStates.Min(k => k.t) - 1;
-    var maxT = activeStates.Max(k => k.t) + 1;
-    for (int t = minT; t <= maxT; t++)
+    var r = nums.Dequeue();
+    while (ops.Count > 0)
     {
-        for (int z = minZ; z <= maxZ; z++)
+        var op = ops.Dequeue();
+        if (op == '+')
         {
-            Console.WriteLine($"z={z},t={t}");
-            for (int y = minY; y <= maxY; y++)
-            {
-                for (int x = minX; x <= maxX; x++)
-                {
-                    var v = new Vector4(x, y, z, t);
-                    if (activeStates.Contains(v))
-                        Console.Write('#');
-                    else
-                        Console.Write('.');
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine();
+            r += nums.Dequeue();
         }
-        Console.WriteLine();
+        else
+        {
+            r *= nums.Dequeue();
+        }
     }
+    return (i, r);
 }
