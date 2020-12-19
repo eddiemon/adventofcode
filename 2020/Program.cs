@@ -7,9 +7,10 @@ using System.Text.RegularExpressions;
 
 using aoc;
 
-var input = File.ReadAllLines("../../../19.1.in");
+var input = File.ReadAllLines("../../../19.in");
 
-var rules = new Dictionary<int, RuleSelector>();
+var rrules = new Dictionary<int, string>();
+var rules = new Dictionary<int, Rule>();
 var messages = new List<string>();
 var parsingMessages = false;
 foreach (var l in input)
@@ -22,32 +23,9 @@ foreach (var l in input)
 
     if (!parsingMessages)
     {
-        var ruleNumberSeparatorIdx = l.IndexOf(":");
-        var ruleParse = Regex.Match(l, @"(?<ruleNumber>\d+): (?<char>""."")?(?<subRule1>[^\|]+)?\|?(?<subRule2>.*)?");
+        var ruleParse = Regex.Match(l, @"(?<ruleNumber>\d+): (?<rule>.*)");
         var ruleNumber = int.Parse(ruleParse.Groups["ruleNumber"].Value);
-        if (ruleParse.Groups["subRule2"].Value != string.Empty)
-        {
-            var subRule2 = ruleParse.Groups["subRule2"].Value.Trim().Split(' ').Select(s => int.Parse(s)).ToArray();
-            var subRule1 = ruleParse.Groups["subRule1"].Value.Trim().Split(' ').Select(s => int.Parse(s)).ToArray();
-            var ruleSelector = new CompoundChainRuleSelector(new ChainRuleSelector(subRule1), new ChainRuleSelector(subRule2));
-            rules.Add(ruleNumber, ruleSelector);
-        }
-        else if (ruleParse.Groups["subRule1"].Value != string.Empty)
-        {
-            var subRule1 = ruleParse.Groups["subRule1"].Value.Trim().Split(' ').Select(s => int.Parse(s)).ToArray();
-            var ruleSelector = new ChainRuleSelector(subRule1);
-            rules.Add(ruleNumber, ruleSelector);
-        }
-        else if (ruleParse.Groups["char"].Value != string.Empty)
-        {
-            var theChar = ruleParse.Groups["char"].Value[1];
-            var ruleSelector = new ConstantRuleSelector(theChar);
-            rules.Add(ruleNumber, ruleSelector);
-        }
-        else
-        {
-            throw new Exception();
-        }
+        rrules.Add(ruleNumber, ruleParse.Groups["rule"].Value);
     }
     else
     {
@@ -55,99 +33,78 @@ foreach (var l in input)
     }
 }
 
-rules[8] = new CompoundChainRuleSelector(new ChainRuleSelector(new[] { 42 }), new ChainRuleSelector(new[] { 42, 8 }));
-rules[11] = new CompoundChainRuleSelector(new ChainRuleSelector(new[] { 42, 31 }), new ChainRuleSelector(new[] { 42, 11, 31 }));
+rrules[8] = "42 | 42 42 | 42 42 42 | 42 42 42 42 | 42 42 42 42 42 | 42 42 42 42 42 42";
+rrules[11] = "42 31 | 42 42 31 31 | 42 42 42 31 31 31 | 42 42 42 42 31 31 31 31 | 42 42 42 42 42 31 31 31 31 31";
 
-var messagesMatchingRule = messages.Where(m => StringMatchWholeRule(m, 0)).ToList();
+var messagesMatchingRule = messages.Where(m => Regex.IsMatch(m, "^" + GetRule(0).ToString() + "$")).ToList();
 Console.WriteLine(messagesMatchingRule.Count);
 
-bool StringMatchWholeRule(ReadOnlySpan<char> l, int ruleNumber)
+Rule GetRule(int ruleNumber, int stack = 0)
 {
-    var res = StringMatchRule(l, ruleNumber);
-    return res.match && res.consumedChars == l.Length;
+    if (!rules.ContainsKey(ruleNumber))
+        rules[ruleNumber] = ToRule(rrules[ruleNumber]);
+
+    return rules[ruleNumber];
 }
 
-(int consumedChars, bool match) StringMatchRule(ReadOnlySpan<char> l, int ruleNumber)
+Rule ToRule(string r)
 {
-    if (l.Length == 0)
-        return (0, true);
-
-    RuleSelector ruleSelector = rules[ruleNumber];
-
-    if (ruleSelector is ConstantRuleSelector a)
+    if (r == "\"a\"" || r == "\"b\"")
     {
-        return (1, l[0] == a.TheChar);
+        return new ConstantRule(r[1]);
     }
-    else if (ruleSelector is ChainRuleSelector b)
+    else if (r.IndexOf(" | ") > 0)
     {
-        return ChainRuleMatch(l, b);
+        var pipeSplit = r.Split(" | ");
+        var andRules = pipeSplit.Select(s => new AndRule(s.Trim().Split(' ').Select(ss => GetRule(int.Parse(ss))).ToArray()));
+        return new OrRule(andRules.ToArray());
     }
-    else if (ruleSelector is CompoundChainRuleSelector c)
+    else
     {
-        var ruleSelectors = c.RuleSelector;
-
-        foreach (var bb in ruleSelectors)
-        {
-            var res = ChainRuleMatch(l, bb);
-            if (res.match)
-                return res;
-        }
-    }
-
-    return (0, false);
-
-    (int consumedChars, bool match) ChainRuleMatch(ReadOnlySpan<char> l, ChainRuleSelector b)
-    {
-        int consumedChars = 0;
-        bool allMatch = true;
-        foreach (var subRuleNumber in b.SubRules)
-        {
-            var res = StringMatchRule(l[consumedChars..], subRuleNumber);
-            consumedChars += res.consumedChars;
-            if (!res.match)
-            {
-                allMatch = false;
-                break;
-            }
-        }
-        return (consumedChars, allMatch);
+        return new AndRule(r.Trim().Split(' ').Select(s => GetRule(int.Parse(s))).ToArray());
     }
 }
 
 #region selector
 
-internal class RuleSelector
+internal abstract class Rule
 {
 }
 
-internal class ConstantRuleSelector : RuleSelector
+internal class ConstantRule : Rule
 {
-    public ConstantRuleSelector(char theChar)
+    public ConstantRule(char theChar)
     {
         TheChar = theChar;
     }
 
     public char TheChar { get; }
+
+    public override string ToString() => TheChar.ToString();
 }
 
-internal class ChainRuleSelector : RuleSelector
+internal class AndRule : Rule
 {
-    public ChainRuleSelector(int[] subRules)
+    public AndRule(params Rule[] rules)
     {
-        SubRules = subRules;
+        Rules = rules.ToList();
     }
 
-    public int[] SubRules { get; }
+    public List<Rule> Rules { get; }
+
+    public override string ToString() => string.Join("", Rules);
 }
 
-internal class CompoundChainRuleSelector : RuleSelector
+internal class OrRule : Rule
 {
-    public CompoundChainRuleSelector(params ChainRuleSelector[] ruleSelector)
+    public OrRule(params Rule[] rules)
     {
-        RuleSelector = ruleSelector;
+        Rules = rules.ToList();
     }
 
-    public IEnumerable<ChainRuleSelector> RuleSelector { get; }
+    public List<Rule> Rules { get; }
+
+    public override string ToString() => "(" + string.Join("|", Rules.Select(r => r.ToString())) + ")";
 }
 
 #endregion selector
