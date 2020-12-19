@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 using aoc;
 
-var input = File.ReadAllLines("../../../19.in");
+var input = File.ReadAllLines("../../../19.1.in");
 
 var rules = new Dictionary<int, RuleSelector>();
 var messages = new List<string>();
@@ -55,6 +55,9 @@ foreach (var l in input)
     }
 }
 
+rules[8] = new CompoundChainRuleSelector(new ChainRuleSelector(new[] { 42 }), new ChainRuleSelector(new[] { 42, 8 }));
+rules[11] = new CompoundChainRuleSelector(new ChainRuleSelector(new[] { 42, 31 }), new ChainRuleSelector(new[] { 42, 11, 31 }));
+
 var messagesMatchingRule = messages.Where(m => StringMatchWholeRule(m, 0)).ToList();
 Console.WriteLine(messagesMatchingRule.Count);
 
@@ -66,6 +69,9 @@ bool StringMatchWholeRule(ReadOnlySpan<char> l, int ruleNumber)
 
 (int consumedChars, bool match) StringMatchRule(ReadOnlySpan<char> l, int ruleNumber)
 {
+    if (l.Length == 0)
+        return (0, true);
+
     RuleSelector ruleSelector = rules[ruleNumber];
 
     if (ruleSelector is ConstantRuleSelector a)
@@ -78,7 +84,9 @@ bool StringMatchWholeRule(ReadOnlySpan<char> l, int ruleNumber)
     }
     else if (ruleSelector is CompoundChainRuleSelector c)
     {
-        foreach (var bb in c.RuleSelector)
+        var ruleSelectors = c.RuleSelector;
+
+        foreach (var bb in ruleSelectors)
         {
             var res = ChainRuleMatch(l, bb);
             if (res.match)
