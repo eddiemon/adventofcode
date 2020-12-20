@@ -11,12 +11,12 @@ var input = File.ReadAllLines("../../../20.in");
 
 int tileId = 0;
 var tileBuffer = new List<string>();
-var unplacedTiles = new List<Tile>();
+var tiles = new List<Tile>();
 foreach (var l in input)
 {
     if (string.IsNullOrEmpty(l))
     {
-        unplacedTiles.Add(new Tile(tileId, tileBuffer.ToArray()));
+        tiles.Add(new Tile(tileId, tileBuffer.ToArray()));
         tileBuffer.Clear();
     }
     else if (l.StartsWith("Tile"))
@@ -29,360 +29,244 @@ foreach (var l in input)
     }
 }
 
-var adjecentTileCandidates = new Dictionary<Tile, List<List<Tile>>>();
-foreach (var tile in unplacedTiles)
+Tile topLeftCorner = null;
+foreach (var tile in tiles)
 {
-    adjecentTileCandidates.Add(tile, FindAdjecentTileCandidates(tile));
+    var adjecentTiles = FindAdjecentTiles(tile);
+    var adjTiles = new[] { adjecentTiles.North, adjecentTiles.East, adjecentTiles.South, adjecentTiles.West };
+
+    topLeftCorner = adjecentTiles switch
+    {
+        (Tile, Tile, null, null) => tile.FlipHorizontal(),
+        (Tile, null, null, Tile) => tile.FlipVertical().FlipHorizontal(),
+        (null, Tile, Tile, null) => tile,
+        (null, null, Tile, Tile) => tile.FlipVertical(),
+        _ => null
+    };
+
+    if (topLeftCorner != null)
+        break;
 }
 
-var edgeTiles = adjecentTileCandidates.Where(kvp => kvp.Value.Any(adjTiles => adjTiles.Count == 0)).Select(kvp => kvp.Key).ToList();
-var cornerTiles = edgeTiles.Where(t => adjecentTileCandidates[t].Where(adjTiles => adjTiles.Count == 0).Count() == 2).ToList();
-Console.WriteLine(edgeTiles.Count);
-Console.WriteLine(cornerTiles.Select(t => t.Id).Aggregate((a, b) => a * b));
+//var temp = FindAdjecentTiles(topLeftCorner);
+//topLeftCorner.Print();
 
-//var placedTiles = new Dictionary<Vector2, Tile>();
+//topLeftCorner.Print();
 
-//PlaceAdjecentTiles(cornerTiles.First(), 0, 0);
+var borderImageLength = tiles[0].Rows.Length;
+var borderLessImageLength = (borderImageLength - 2);
+var fullImageLength = borderLessImageLength * ((int)Math.Sqrt(tiles.Count));
+var fullImage = new char[fullImageLength * fullImageLength];
 
-//var minX = placedTiles.Keys.Min(u => u.x);
-//var maxX = placedTiles.Keys.Max(u => u.x);
-//var minY = placedTiles.Keys.Min(u => u.y);
-//var maxY = placedTiles.Keys.Max(u => u.y);
-
-//for (int y = minY; y <= maxY; y++)
-//{
-//    for (int x = minX; x <= maxX; x++)
-//    {
-//        var tileKey = placedTiles.Keys.FirstOrDefault(t => t.x == x && t.y == y);
-//        var tId = placedTiles[tileKey].Id.ToString() ?? "9999";
-//        Console.Write($" {tId} ");
-//    }
-//    Console.WriteLine();
-//}
-
-//var topLeftTile = placedTiles[(minX, minY)];
-//var topRightTile = placedTiles[(maxX, minY)];
-//var bottomLeftTile = placedTiles[(minX, maxY)];
-//var bottomRightTile = placedTiles[(maxX, maxY)];
-
-//Console.WriteLine(topLeftTile.Id * topRightTile.Id * bottomLeftTile.Id * bottomRightTile.Id);
-
-List<List<Tile>> FindAdjecentTileCandidates(Tile tile)
+var edgeTile = topLeftCorner;
+var colTile = topLeftCorner;
+for (int row = 0; row < fullImageLength; row += borderLessImageLength)
 {
-    var north = new List<Tile>();
-    var south = new List<Tile>();
-    var east = new List<Tile>();
-    var west = new List<Tile>();
-    var result = new List<List<Tile>> { north, south, east, west };
+    for (int col = 0; col < fullImageLength; col += borderLessImageLength)
+    {
+        for (int y = 1; y < borderImageLength - 1; y++)
+        {
+            for (int x = 1; x < borderImageLength - 1; x++)
+            {
+                fullImage[(row + y - 1) * fullImageLength + (col + x - 1)] = colTile.Rows[y][x];
+            }
+        }
+        var adjs = FindAdjecentTiles(colTile);
+        colTile = adjs.East;
+    }
+    var adj = FindAdjecentTiles(edgeTile);
+    edgeTile = colTile = adj.South;
+}
+
+var fullImageArray = new string[fullImageLength];
+
+for (int y = 0; y < fullImageLength; y++)
+{
+    var arr = fullImage.Skip(fullImageLength * y).Take(fullImageLength).ToArray();
+    fullImageArray[y] = new string(arr);
+}
+
+var fullImageTile = new Tile(0, fullImageArray);
+//fullImageTile.Print();
+
+var seamonster = new string[] {
+    "                  # ",
+    "#    ##    ##    ###",
+    " #  #  #  #  #  #   "
+};
+
+var noOfSeamonster = 0;
+for (int i = 0; i < 12; i++)
+{
+    for (int row = 0; row < fullImageTile.Rows.Length - seamonster.Length; row++)
+    {
+        for (int col = 0; col < fullImageTile.Cols.Length - seamonster[0].Length; col++)
+        {
+            var foundSeamonster = true;
+            for (int sy = 0; sy < seamonster.Length; sy++)
+            {
+                for (int sx = 0; sx < seamonster[0].Length; sx++)
+                {
+                    if (seamonster[sy][sx] == '#' && fullImageTile.Rows[row + sy][col + sx] != '#')
+                    {
+                        foundSeamonster = false;
+                        break;
+                    }
+                }
+                if (!foundSeamonster)
+                    break;
+            }
+
+            if (foundSeamonster)
+                noOfSeamonster++;
+        }
+    }
+
+    if (noOfSeamonster > 0)
+        break;
+
+    if (i == 4) fullImageTile = fullImageTile.FlipHorizontal();
+    else if (i == 8) fullImageTile = fullImageTile.FlipVertical();
+    else if (i % 4 == 0) fullImageTile = fullImageTile.RotateCW();
+    else if (i % 4 == 1) fullImageTile = fullImageTile.RotateCW();
+    else if (i % 4 == 2) fullImageTile = fullImageTile.RotateCW();
+    else if (i % 4 == 3) fullImageTile = fullImageTile.RotateCW();
+    //else if (i == 4) fullImageTile = fullImageTile.FlipVertical();
+}
+
+Console.WriteLine(noOfSeamonster);
+
+var seamonsterHashes = noOfSeamonster * 15;
+int hashes = 0;
+foreach (var l in fullImageTile.Rows)
+{
+    for (int i = 0; i < l.Length; i++)
+    {
+        if (l[i] == '#') hashes++;
+    }
+}
+
+Console.WriteLine(hashes - seamonsterHashes);
+
+(Tile North, Tile East, Tile South, Tile West) FindAdjecentTiles(Tile tile)
+{
+    Tile north = null, east = null, south = null, west = null;
 
     var dir = tile.GetNorth();
-    foreach (var t in UnplacedTiles(tile))
+    foreach (var t in GetTilesExcept(tile))
     {
         if (t.GetWest() == dir)
-            north.Add(t.RotateCCW());
+            north = t.RotateCCW();
         else if (t.GetWestReverse() == dir)
-            north.Add(t.RotateCCW().FlipHorizontal());
+            north = t.RotateCCW().FlipHorizontal();
         else if (t.GetEast() == dir)
-            north.Add(t.RotateCW().FlipVertical());
+            north = t.RotateCW().FlipVertical();
         else if (t.GetEastReverse() == dir)
-            north.Add(t.RotateCW());
+            north = t.RotateCW();
         else if (t.GetNorth() == dir)
-            north.Add(t.FlipHorizontal());
+            north = t.FlipHorizontal();
         else if (t.GetNorthReverse() == dir)
-            north.Add(t.FlipHorizontal().FlipVertical());
+            north = t.FlipHorizontal().FlipVertical();
         else if (t.GetSouth() == dir)
-            north.Add(t);
+            north = t;
         else if (t.GetSouthReverse() == dir)
-            north.Add(t.FlipVertical());
+            north = t.FlipVertical();
+
+        if (north != null)
+            break;
     }
 
     dir = tile.GetSouth();
-    foreach (var t in UnplacedTiles(tile))
+    foreach (var t in GetTilesExcept(tile))
     {
         if (t.GetWest() == dir)
-            south.Add(t.RotateCW().FlipVertical());
+            south = t.RotateCW().FlipVertical();
         else if (t.GetWestReverse() == dir)
-            south.Add(t.RotateCW());
+            south = t.RotateCW();
         else if (t.GetEast() == dir)
-            south.Add(t.RotateCCW());
+            south = t.RotateCCW();
         else if (t.GetEastReverse() == dir)
-            south.Add(t.RotateCCW().FlipVertical());
+            south = t.RotateCCW().FlipVertical();
         else if (t.GetNorth() == dir)
-            south.Add(t);
+            south = t;
         else if (t.GetNorthReverse() == dir)
-            south.Add(t.FlipVertical());
+            south = t.FlipVertical();
         else if (t.GetSouth() == dir)
-            south.Add(t.FlipHorizontal());
+            south = t.FlipHorizontal();
         else if (t.GetSouthReverse() == dir)
-            south.Add(t.FlipHorizontal().FlipVertical());
+            south = t.FlipVertical().FlipHorizontal();
+
+        if (south != null)
+            break;
     }
 
     dir = tile.GetEast();
-    foreach (var t in UnplacedTiles(tile))
+    foreach (var t in GetTilesExcept(tile))
     {
         if (t.GetWest() == dir)
-            east.Add(t);
+            east = t;
         else if (t.GetWestReverse() == dir)
-            east.Add(t.FlipHorizontal());
+            east = t.FlipHorizontal();
         else if (t.GetEast() == dir)
-            east.Add(t.FlipVertical());
+            east = t.FlipVertical();
         else if (t.GetEastReverse() == dir)
-            east.Add(t.FlipVertical().FlipHorizontal());
+            east = t.FlipVertical().FlipHorizontal();
         else if (t.GetNorth() == dir)
-            east.Add(t.RotateCCW().FlipVertical());
+            east = t.RotateCCW().FlipHorizontal();
         else if (t.GetNorthReverse() == dir)
-            east.Add(t.RotateCCW());
+            east = t.RotateCCW();
         else if (t.GetSouth() == dir)
-            east.Add(t.RotateCW());
+            east = t.RotateCW();
         else if (t.GetSouthReverse() == dir)
-            east.Add(t.RotateCW().FlipVertical());
+            east = t.RotateCW().FlipHorizontal();
+
+        if (east != null)
+        {
+            System.Diagnostics.Debug.Assert(dir == east.GetWest());
+            break;
+        }
     }
 
     dir = tile.GetWest();
-    foreach (var t in UnplacedTiles(tile))
+    foreach (var t in GetTilesExcept(tile))
     {
         if (t.GetWest() == dir)
-            west.Add(t.FlipVertical());
+            west = t.FlipVertical();
         else if (t.GetWestReverse() == dir)
-            west.Add(t.FlipVertical().FlipHorizontal());
+            west = t.FlipVertical().FlipHorizontal();
         else if (t.GetEast() == dir)
-            west.Add(t);
+            west = t;
         else if (t.GetEastReverse() == dir)
-            west.Add(t.FlipHorizontal());
+            west = t.FlipHorizontal();
         else if (t.GetNorth() == dir)
-            west.Add(t.RotateCW());
+            west = t.RotateCW();
         else if (t.GetNorthReverse() == dir)
-            west.Add(t.RotateCW().FlipVertical());
+            west = t.RotateCW().FlipVertical();
         else if (t.GetSouth() == dir)
-            west.Add(t.RotateCCW().FlipVertical());
+            west = t.RotateCCW().FlipVertical();
         else if (t.GetSouthReverse() == dir)
-            west.Add(t.RotateCCW());
+            west = t.RotateCCW();
+
+        if (west != null)
+            break;
     }
 
-    return result;
+    return (north, east, south, west);
 }
 
-void PlaceAdjecentTiles(Tile tile, int x, int y)
+IEnumerable<Tile> GetTilesExcept(Tile excluded)
 {
-    //if (placedTiles.Keys.Contains((x, y)))
-    //    throw new Exception();
-
-    //var northCandidates = adjecentTileCandidates[tile][0];
-    //var southCandidates = adjecentTileCandidates[tile][1];
-    //var eastCandidates = adjecentTileCandidates[tile][2];
-    //var westCandidates = adjecentTileCandidates[tile][3];
-
-    ////var dir = tile.GetNorth();
-    //while (northCandidates.Count > 1)
-    //{
-    //    var candidateTile = northCandidates.First();
-    //    try
-    //    {
-    //        PlaceAdjecentTiles(candidateTile, x, y - 1);
-    //    }
-    //    catch
-    //    {
-    //        northCandidates.Remove(candidateTile);
-    //        placedTiles.Remove((x, y - 1));
-    //    }
-    //}
-
-    //placedTiles.Add((x, y), tile);
-    //unplacedTiles.Remove(tile);
-
-    //foreach (var t in UnplacedTiles())
-    //{
-    //    if (t.GetWest() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCCW(), x, y - 1);
-    //        //break;
-    //    }
-    //    else if (t.GetWestReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCCW().FlipHorizontal(), x, y - 1);
-    //        //break;
-    //    }
-    //    else if (t.GetEast() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCW().FlipVertical(), x, y - 1);
-    //        //break;
-    //    }
-    //    else if (t.GetEastReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCW(), x, y - 1);
-    //        //break;
-    //    }
-    //    else if (t.GetNorth() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.FlipHorizontal(), x, y - 1);
-    //        //break;
-    //    }
-    //    else if (t.GetNorthReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.FlipHorizontal().FlipVertical(), x, y - 1);
-    //        //break;
-    //    }
-    //    else if (t.GetSouth() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t, x, y - 1);
-    //        //break;
-    //    }
-    //    else if (t.GetSouthReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.FlipVertical(), x, y - 1);
-    //        //break;
-    //    }
-    //}
-
-    //dir = tile.GetSouth();
-    //foreach (var t in UnplacedTiles())
-    //{
-    //    if (t.GetWest() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCW().FlipVertical(), x, y + 1);
-    //        //break;
-    //    }
-    //    else if (t.GetWestReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCW(), x, y + 1);
-    //        //break;
-    //    }
-    //    else if (t.GetEast() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCCW(), x, y + 1);
-    //        //break;
-    //    }
-    //    else if (t.GetEastReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCCW().FlipVertical(), x, y + 1);
-    //        //break;
-    //    }
-    //    else if (t.GetNorth() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t, x, y + 1);
-    //        //break;
-    //    }
-    //    else if (t.GetNorthReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.FlipVertical(), x, y + 1);
-    //        //break;
-    //    }
-    //    else if (t.GetSouth() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.FlipHorizontal(), x, y + 1);
-    //        //break;
-    //    }
-    //    else if (t.GetSouthReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.FlipHorizontal().FlipVertical(), x, y + 1);
-    //        //break;
-    //    }
-    //}
-
-    //dir = tile.GetEast();
-    //foreach (var t in UnplacedTiles())
-    //{
-    //    if (t.GetWest() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t, x + 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetWestReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.FlipHorizontal(), x + 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetEast() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.FlipVertical(), x + 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetEastReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.FlipVertical().FlipHorizontal(), x + 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetNorth() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCCW().FlipVertical(), x + 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetNorthReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCCW(), x + 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetSouth() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCW(), x + 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetSouthReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCW().FlipVertical(), x + 1, y);
-    //        //break;
-    //    }
-    //}
-
-    //dir = tile.GetWest();
-    //foreach (var t in UnplacedTiles())
-    //{
-    //    if (t.GetWest() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.FlipVertical(), x - 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetWestReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.FlipVertical().FlipHorizontal(), x - 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetEast() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t, x - 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetEastReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.FlipHorizontal(), x - 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetNorth() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCW(), x - 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetNorthReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCW().FlipVertical(), x - 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetSouth() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCCW().FlipVertical(), x - 1, y);
-    //        //break;
-    //    }
-    //    else if (t.GetSouthReverse() == dir)
-    //    {
-    //        PlaceAdjecentTiles(t.RotateCCW(), x - 1, y);
-    //        //break;
-    //    }
-    //}
-}
-
-IEnumerable<Tile> UnplacedTiles(Tile? excluded = null)
-{
-    for (int i = 0; i < unplacedTiles.Count; i++)
+    for (int i = 0; i < tiles.Count; i++)
     {
-        if (excluded != null && excluded == unplacedTiles[i])
+        if (excluded.Id == tiles[i].Id)
             continue;
-        yield return unplacedTiles[i];
+        yield return tiles[i];
     }
 }
 
 internal class Tile
 {
-    public Tile(int id, string[] rows)
+    public Tile(long id, string[] rows)
     {
         Rows = rows;
         Cols = new string[rows[0].Length];
@@ -393,8 +277,8 @@ internal class Tile
         Id = id;
     }
 
-    public string[] Rows { get; private set; }
-    public string[] Cols { get; private set; }
+    public string[] Rows { get; }
+    public string[] Cols { get; }
     public long Id { get; }
 
     public override string ToString() => Id.ToString();
@@ -418,41 +302,25 @@ internal class Tile
     [System.Diagnostics.DebuggerStepThrough]
     public Tile FlipHorizontal()
     {
-        var newCols = new string[Cols.Length];
-        for (int i = 0; i < Cols.Length; i++)
-        {
-            newCols[i] = Cols[^(i + 1)];
-        }
-        Cols = newCols;
-
-        var newRows = new string[Rows.Length];
-        for (int i = 0; i < Rows.Length; i++)
-        {
-            newRows[i] = new string(Rows[i].Reverse().ToArray());
-        }
-        Rows = newRows;
-
-        return this;
-    }
-
-    [System.Diagnostics.DebuggerStepThrough]
-    public Tile FlipVertical()
-    {
-        var newCols = new string[Cols.Length];
-        for (int i = 0; i < Cols.Length; i++)
-        {
-            newCols[i] = new string(Cols[i].Reverse().ToArray());
-        }
-        Cols = newCols;
-
         var newRows = new string[Rows.Length];
         for (int i = 0; i < Rows.Length; i++)
         {
             newRows[i] = Rows[^(i + 1)];
         }
-        Rows = newRows;
 
-        return this;
+        return new Tile(Id, newRows);
+    }
+
+    [System.Diagnostics.DebuggerStepThrough]
+    public Tile FlipVertical()
+    {
+        var newRows = new string[Rows.Length];
+        for (int i = 0; i < Rows.Length; i++)
+        {
+            newRows[i] = new string(Rows[i].Reverse().ToArray());
+        }
+
+        return new Tile(Id, newRows);
     }
 
     [System.Diagnostics.DebuggerStepThrough]
@@ -464,16 +332,7 @@ internal class Tile
             newRows[i] = new string(Cols[i].Reverse().ToArray());
         }
 
-        var newCols = new string[Cols.Length];
-        for (int i = Cols.Length - 1; i >= 0; i--)
-        {
-            newCols[i] = Rows[Rows.Length - i - 1];
-        }
-
-        Rows = newRows;
-        Cols = newCols;
-
-        return this;
+        return new Tile(Id, newRows);
     }
 
     [System.Diagnostics.DebuggerStepThrough]
@@ -485,16 +344,7 @@ internal class Tile
             newRows[i] = Cols[Cols.Length - i - 1];
         }
 
-        var newCols = new string[Cols.Length];
-        for (int i = 0; i < Cols.Length; i++)
-        {
-            newCols[i] = new string(Rows[i].Reverse().ToArray());
-        }
-
-        Rows = newRows;
-        Cols = newCols;
-
-        return this;
+        return new Tile(Id, newRows);
     }
 
     public void Print()
