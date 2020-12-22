@@ -7,46 +7,67 @@ using System.Text.RegularExpressions;
 
 using aoc;
 
-var input = File.ReadAllLines("../../../21.in");
+var input = File.ReadAllLines("../../../22.in");
 
-var allergenToFoods = new List<(string[] Allergens, string[] Ingredients)>();
+var deck1 = new Queue<long>();
+var deck2 = new Queue<long>();
+var parsedDeck = deck1;
 foreach (var l in input)
 {
-    var m = Regex.Match(l, @"^(?<ingredients>[^\(]+)\(contains (?<allergen>[^\)]+)\)$");
-    var allergens = m.Groups["allergen"].Value.Split(", ");
-    var ingredients = m.Groups["ingredients"].Value.Trim().Split(' ');
-    allergenToFoods.Add((allergens, ingredients));
-}
-
-var allAllergens = allergenToFoods.SelectMany(kvp => kvp.Allergens).Distinct();
-var allergensToCandidateIngredients = new Dictionary<string, List<string>>();
-foreach (var allergen in allAllergens)
-{
-    var matchingFoods = allergenToFoods.Where(x => x.Ingredients.Contains(allergen)).Select(kvp => kvp.Ingredients.ToList()).ToList();
-    var x = matchingFoods.Aggregate((x, y) => x.Intersect(y).ToList());
-    allergensToCandidateIngredients.Add(allergen, x);
-}
-
-var ingredientsWithoutAllergens = allergenToFoods
-    .SelectMany(kvp => kvp.Ingredients)
-    .Where(ingredient => !allergensToCandidateIngredients.SelectMany(x => x.Value).Distinct().Contains(ingredient))
-    .ToList();
-
-var allergensToIngredient = new Dictionary<string, string>();
-do
-{
-    var allergensWithOneCandidate = allergensToCandidateIngredients.Where(kvp => kvp.Value.Count == 1);
-
-    foreach (var (allergen, ingredients) in allergensWithOneCandidate)
+    if (l.StartsWith("Player"))
+        continue;
+    if (string.IsNullOrEmpty(l))
     {
-        allergensToIngredient.Add(allergen, ingredients[0]);
-        allergensToCandidateIngredients.Remove(allergen);
-        foreach (var x in allergensToCandidateIngredients.Values.Where(v => v.Contains(ingredients[0])))
-        {
-            x.Remove(ingredients[0]);
-        }
+        parsedDeck = deck2;
+        continue;
     }
-}
-while (allergensToCandidateIngredients.Count > 0);
 
-Console.WriteLine(string.Join(',', allergensToIngredient.ToList().OrderBy(kvp => kvp.Key).Select(kvp => kvp.Value)));
+    parsedDeck.Enqueue(long.Parse(l));
+}
+
+var round = 1;
+while (true)
+{
+    //Console.WriteLine($"Round {round}");
+    var card1 = deck1.Dequeue();
+    var card2 = deck2.Dequeue();
+    if (card1 > card2)
+    {
+        //Console.WriteLine("Player 1 wins the round");
+        deck1.Enqueue(card1);
+        deck1.Enqueue(card2);
+    }
+    else if (card2 > card1)
+    {
+        //Console.WriteLine("Player 2 wins the round");
+        deck2.Enqueue(card2);
+        deck2.Enqueue(card1);
+    }
+    else
+        System.Diagnostics.Debug.Fail("");
+
+    if (deck1.Count == 0 || deck2.Count == 0)
+        break;
+}
+
+//Console.Write("Player 1's deck: ");
+//Console.Write(string.Join(", ", deck1));
+//Console.WriteLine();
+
+//Console.Write("Player 2's deck: ");
+//Console.Write(string.Join(", ", deck2));
+//Console.WriteLine();
+
+long p1 = 0;
+for (int i = deck1.Count; i > 0; i--)
+{
+    p1 += i * deck1.Dequeue();
+}
+
+long p2 = 0;
+for (int i = deck2.Count; i > 0; i--)
+{
+    p1 += i * deck2.Dequeue();
+}
+
+Console.WriteLine($"P1: {p1}, P2: {p2}");
