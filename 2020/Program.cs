@@ -7,113 +7,51 @@ using System.Text.RegularExpressions;
 
 using aoc;
 
-var input = File.ReadAllLines("../../../22.in");
-
-var deck1 = new Queue<long>();
-var deck2 = new Queue<long>();
-var parsedDeck = deck1;
-foreach (var l in input)
+//var input = File.ReadAllLines("../../../22.in");
+var cups = "614752839";
+for (int i = 0; i < 100; i++)
 {
-    if (l.StartsWith("Player"))
-        continue;
-    if (string.IsNullOrEmpty(l))
+    var currCup = i % cups.Length;
+    var cupLabel = cups[currCup];
+    Console.WriteLine($"Move {i + 1}");
+    Console.WriteLine($"cups: {cups}");
+    Console.WriteLine($"current cup: {cups[currCup]}");
+    Console.WriteLine();
+
+    string cupsToMove;
+    if (currCup + 4 >= cups.Length)
     {
-        parsedDeck = deck2;
-        continue;
+        var lo = cups[0..((currCup + 4) % cups.Length)];
+        var hi = cups[^(3 - lo.Length)..];
+        if (lo.Length > 0)
+            cups = cups.Replace(lo, "");
+        if (hi.Length > 0)
+            cups = cups.Replace(hi, "");
+        cupsToMove = hi + lo;
+    }
+    else
+    {
+        cupsToMove = cups[(currCup + 1)..(currCup + 4)];
+        cups = cups.Replace(cupsToMove, "");
     }
 
-    parsedDeck.Enqueue(long.Parse(l));
-}
-
-RecursiveCombat(deck1, deck2);
-
-// Return value is true if p1 won the round. otherwise p2 won.
-bool RecursiveCombat(Queue<long> deck1, Queue<long> deck2)
-{
-    var p1DecksSeen = new HashSet<int>();
-    var p2DecksSeen = new HashSet<int>();
+    var dest = (char)(cupLabel - 1);
     while (true)
     {
-        var h = GetDeckHash(deck1);
-        if (p1DecksSeen.Contains(h.ToHashCode()))
-        {
-            Console.WriteLine("Seen player 1's deck before");
-            return true;
-        }
-        else
-            p1DecksSeen.Add(h.ToHashCode());
+        if (dest < '1') dest = '9';
 
-        h = GetDeckHash(deck2);
-        if (p2DecksSeen.Contains(h.ToHashCode()))
-        {
-            Console.WriteLine("Seen player 2's deck before");
-            return true;
-        }
-        else
-            p2DecksSeen.Add(h.ToHashCode());
+        if (cupsToMove.IndexOf(dest) == -1)
+            break;
 
-        var card1 = deck1.Dequeue();
-        var card2 = deck2.Dequeue();
-
-        if (deck1.Count >= card1 && deck2.Count >= card2)
-        {
-            var p1Won = RecursiveCombat(new Queue<long>(deck1.Take((int)card1)), new Queue<long>(deck2.Take((int)card2)));
-            if (p1Won)
-            {
-                deck1.Enqueue(card1);
-                deck1.Enqueue(card2);
-            }
-            else
-            {
-                deck2.Enqueue(card2);
-                deck2.Enqueue(card1);
-            }
-        }
-        else
-        {
-            if (card1 > card2)
-            {
-                deck1.Enqueue(card1);
-                deck1.Enqueue(card2);
-            }
-            else if (card2 > card1)
-            {
-                deck2.Enqueue(card2);
-                deck2.Enqueue(card1);
-            }
-            else
-                System.Diagnostics.Debug.Fail("");
-        }
-
-        if (deck1.Count == 0)
-            return false;
-        else if (deck2.Count == 0)
-            return true;
+        dest = (char)(dest - 1);
     }
 
-    throw new Exception();
+    cups = cups.Replace(dest.ToString(), dest.ToString() + cupsToMove);
+    while (cups[currCup] != cupLabel)
+        cups = cups[1..] + cups[0];
 }
 
-long p1 = 0;
-for (int i = deck1.Count; i > 0; i--)
-{
-    p1 += i * deck1.Dequeue();
-}
+while (cups[^1] != '1')
+    cups = cups[1..] + cups[0];
 
-long p2 = 0;
-for (int i = deck2.Count; i > 0; i--)
-{
-    p2 += i * deck2.Dequeue();
-}
-
-Console.WriteLine($"P1: {p1}, P2: {p2}");
-
-HashCode GetDeckHash(IEnumerable<long> deck)
-{
-    var h = new HashCode();
-    foreach (var card in deck)
-    {
-        h.Add(card);
-    }
-    return h;
-}
+Console.WriteLine(cups[..^1]);
