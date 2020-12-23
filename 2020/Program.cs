@@ -8,50 +8,53 @@ using System.Text.RegularExpressions;
 using aoc;
 
 //var input = File.ReadAllLines("../../../22.in");
-var cups = "614752839";
-for (int i = 0; i < 100; i++)
+var cups = new LinkedList<int>("389125467".Select(c => c - '0').Concat(Enumerable.Range(10, 1000000 - 9)));
+var hiCup = cups.Max();
+var cup = cups.First;
+
+var valToCup = new Dictionary<int, LinkedListNode<int>>();
+var cc = cups.First;
+while (cc != null)
 {
-    var currCup = i % cups.Length;
-    var cupLabel = cups[currCup];
-    Console.WriteLine($"Move {i + 1}");
-    Console.WriteLine($"cups: {cups}");
-    Console.WriteLine($"current cup: {cups[currCup]}");
-    Console.WriteLine();
+    valToCup.Add(cc.Value, cc);
+    cc = cc.Next;
+}
 
-    string cupsToMove;
-    if (currCup + 4 >= cups.Length)
+for (int i = 0; i < 10_000000; i++)
+{
+    var cupsToMove = new List<LinkedListNode<int>>();
+    for (int ii = 0; ii < 3; ii++)
     {
-        var lo = cups[0..((currCup + 4) % cups.Length)];
-        var hi = cups[^(3 - lo.Length)..];
-        if (lo.Length > 0)
-            cups = cups.Replace(lo, "");
-        if (hi.Length > 0)
-            cups = cups.Replace(hi, "");
-        cupsToMove = hi + lo;
-    }
-    else
-    {
-        cupsToMove = cups[(currCup + 1)..(currCup + 4)];
-        cups = cups.Replace(cupsToMove, "");
+        var next = cup.Next;
+        if (next == null)
+            next = cups.First;
+        cupsToMove.Add(next);
+        cups.Remove(next);
     }
 
-    var dest = (char)(cupLabel - 1);
+    var dest = cup.Value - 1;
     while (true)
     {
-        if (dest < '1') dest = '9';
+        if (dest < 1) dest = hiCup;
 
-        if (cupsToMove.IndexOf(dest) == -1)
+        if (!cupsToMove.Select(c => c.Value).Contains(dest))
             break;
 
         dest = (char)(dest - 1);
     }
 
-    cups = cups.Replace(dest.ToString(), dest.ToString() + cupsToMove);
-    while (cups[currCup] != cupLabel)
-        cups = cups[1..] + cups[0];
+    var destNode = valToCup[dest];
+    cupsToMove.Reverse();
+    foreach (var c in cupsToMove)
+    {
+        cups.AddAfter(destNode, c);
+    }
+
+    cup = cup.Next;
+    if (cup == null)
+        cup = cups.First;
 }
 
-while (cups[^1] != '1')
-    cups = cups[1..] + cups[0];
-
-Console.WriteLine(cups[..^1]);
+var onePlusOne = valToCup[1].Next ?? cups.First;
+var onePlusTwo = onePlusOne.Next ?? cups.First;
+Console.WriteLine((long)onePlusOne.Value * (long)onePlusTwo.Value);
