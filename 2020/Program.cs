@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using aoc;
 
 //var input = File.ReadAllLines("../../../22.in");
-var cups = new LinkedList<int>("389125467".Select(c => c - '0').Concat(Enumerable.Range(10, 1000000 - 9)));
+var cups = new LinkedList<int>("614752839".Select(c => c - '0').Concat(Enumerable.Range(10, 1000000 - 9)));
 var hiCup = cups.Max();
 var cup = cups.First;
 
@@ -25,9 +25,7 @@ for (int i = 0; i < 10_000000; i++)
     var cupsToMove = new List<LinkedListNode<int>>();
     for (int ii = 0; ii < 3; ii++)
     {
-        var next = cup.Next;
-        if (next == null)
-            next = cups.First;
+        var next = cup.Next ?? cups.First;
         cupsToMove.Add(next);
         cups.Remove(next);
     }
@@ -40,7 +38,7 @@ for (int i = 0; i < 10_000000; i++)
         if (!cupsToMove.Select(c => c.Value).Contains(dest))
             break;
 
-        dest = (char)(dest - 1);
+        dest--;
     }
 
     var destNode = valToCup[dest];
