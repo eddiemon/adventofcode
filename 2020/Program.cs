@@ -7,109 +7,36 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using aoc;
 
-Console.OutputEncoding = Encoding.UTF8;
+const long cardKey = 15113849;
+const long doorKey = 4206373;
 
-var input = File.ReadAllLines("../../../24.in");
-var blackTiles = new HashSet<Vector3>();
-foreach (var l in input)
+var subjNo = 7L;
+var cardValue = 1L;
+var cardLoopSize = 0L;
+for (; cardValue != cardKey; cardLoopSize++)
 {
-    int index = 0;
-    int x = 0, y = 0, z = 0;
-    while (index < l.Length)
-    {
-        if (index + 1 < l.Length && l[index..(index + 2)] == "nw")
-        {
-            z--;
-            y++;
-            index += 2;
-        }
-        else if (index + 1 < l.Length && l[index..(index + 2)] == "ne")
-        {
-            x++;
-            z--;
-            index += 2;
-        }
-        else if (index + 1 < l.Length && l[index..(index + 2)] == "sw")
-        {
-            x--;
-            z++;
-            index += 2;
-        }
-        else if (index + 1 < l.Length && l[index..(index + 2)] == "se")
-        {
-            z++; y--;
-            index += 2;
-        }
-        else if (l[index..(index + 1)] == "w")
-        {
-            x--;
-            y++;
-            index++;
-        }
-        else if (l[index..(index + 1)] == "e")
-        {
-            x++;
-            y--;
-            index++;
-        }
-    }
-
-    if (!blackTiles.Contains((x, y, z)))
-        blackTiles.Add((x, y, z));
-    else
-        blackTiles.Remove((x, y, z));
+    cardValue *= subjNo;
+    cardValue %= 20201227;
 }
 
-for (int i = 0; i < 100; i++)
+var doorValue = 1L;
+var doorLoopSize = 0L;
+for (; doorValue != doorKey; doorLoopSize++)
 {
-    var transforms = new List<Action>();
-    var tilesToCheck = new HashSet<Vector3>();
-    foreach (var v in blackTiles)
-    {
-        tilesToCheck.Add(v);
-        foreach (var vv in v.GetHexagonalNeighbours())
-        {
-            tilesToCheck.Add(vv);
-        }
-    }
-
-    foreach (var v in tilesToCheck)
-    {
-        int blacks = CountBlacks(v);
-        transforms.AddRange(AddTransforms(v, blacks));
-    }
-
-    transforms.ForEach(t => t());
+    doorValue *= subjNo;
+    doorValue %= 20201227;
 }
 
-Console.WriteLine(blackTiles.Count);
+Console.WriteLine(Transform(doorKey, cardLoopSize));
+Console.WriteLine(Transform(cardKey, doorLoopSize));
 
-int CountBlacks(Vector3 v)
+long Transform(long key, long loops)
 {
-    int blacks = 0;
-    foreach (var vv in v.GetHexagonalNeighbours())
+    var value = 1L;
+    for (int i = 0; i < loops; i++)
     {
-        if (blackTiles.Contains(vv))
-            blacks++;
+        value *= key;
+        value %= 20201227;
     }
-
-    return blacks;
-}
-
-List<Action> AddTransforms(Vector3 v, int blacks)
-{
-    var transforms = new List<Action>();
-    if (blackTiles.Contains(v))
-    {
-        if (blacks == 0 || blacks > 2)
-            transforms.Add(() => blackTiles.Remove(v));
-    }
-    else
-    {
-        // tile is white, check for black neighbours
-        if (blacks == 2)
-            transforms.Add(() => blackTiles.Add(v));
-    }
-
-    return transforms;
+    return value;
 }
