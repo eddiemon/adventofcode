@@ -101,6 +101,20 @@ namespace aoc
             }
         }
 
+        /// <summary>
+        /// Vector3 can be used to describe a coordinate in hex grids using cube coordinates.
+        /// This method return the six neighbours.
+        /// </summary>
+        public IEnumerable<Vector3> GetHexagonalNeighbours()
+        {
+            yield return new Vector3(x + 0, y + 1, z - 1);
+            yield return new Vector3(x + 1, y + 0, z - 1);
+            yield return new Vector3(x + 1, y - 1, z + 0);
+            yield return new Vector3(x + 0, y - 1, z + 1);
+            yield return new Vector3(x - 1, y + 0, z + 1);
+            yield return new Vector3(x - 1, y + 1, z + 0);
+        }
+
         public override string ToString() => $"({x},{y},{z})";
     }
 }
