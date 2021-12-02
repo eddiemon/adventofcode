@@ -23,3 +23,13 @@ let depths =
 
 printfn "Part 1: %A" (depths[0]*depths[1])
 
+let depths2 =
+    ([|0;0;0|], commands)
+    ||> Seq.fold (fun acc x -> match x.Direction with
+                                | Forward -> [|acc[0] + x.Magnitude; acc[1] + acc[2]*x.Magnitude; acc[2]|]
+                                | Up ->      [|acc[0]; acc[1]; acc[2] - x.Magnitude|]
+                                | Down ->    [|acc[0]; acc[1]; acc[2] + x.Magnitude|]
+    )
+
+printfn "Part 2: %A" (depths2[0]*depths2[1])
+
