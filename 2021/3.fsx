@@ -6,13 +6,13 @@ let tdigits =
     |> Seq.transpose
     |> Seq.map (fun s -> s |> Seq.map System.Char.GetNumericValue |> Seq.map int)
 
-let mcd digits =
+let mcd digits = // most common digit
     digits
     |> Seq.countBy (fun x -> x)
     |> Seq.maxBy (fun x -> snd(x))
     |> fst
 
-let lcd digits =
+let lcd digits = // least common digit
     digits
     |> Seq.countBy (fun x -> x)
     |> Seq.minBy (fun x -> snd(x))
@@ -21,10 +21,8 @@ let lcd digits =
 let toDecimal digits =
     let length = Seq.length digits
     digits
-    |> Seq.map float
-    |> Seq.mapi (fun i x -> System.Math.Pow(2, float(length - i - 1)) * x)
+    |> Seq.mapi (fun i x -> (pown 2 (length-i-1)) * x)
     |> Seq.sum
-    |> int
 
 let gamma =
     tdigits
