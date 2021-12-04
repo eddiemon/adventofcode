@@ -1,4 +1,5 @@
-﻿var input = File.ReadLines("4.txt");
+﻿var boardsWon = new List<List<List<int?>>>();
+var input = File.ReadLines("4.txt");
 
 var draws = input.First().Split(',').Select(int.Parse).ToList();
 
@@ -26,7 +27,7 @@ System.Console.WriteLine(sum * winningNumber);
     foreach (var number in draws)
     {
         EliminateNumber(number, boards);
-        var wonBoard = BoardWon(boards);
+        var wonBoard = BoardWon();
         if (wonBoard != null)
             return (number, wonBoard);
     }
@@ -48,10 +49,9 @@ void EliminateNumber(int number, List<List<List<int?>>> boards)
     }
 }
 
-List<List<int?>>? BoardWon(List<List<List<int?>>> boards)
+List<List<int?>>? BoardWon()
 {
-    var boardsWon = new Dictionary<List<List<int?>>, bool>();
-    foreach (var board in boards)
+    foreach (var board in boards.Except(boardsWon))
     {
         var won = false;
         for (int y = 0; y < board.Count; y++)
@@ -63,7 +63,12 @@ List<List<int?>>? BoardWon(List<List<List<int?>>> boards)
             won |= board.All(b => b[x] == null);
         }
 
-        if (won) return board;
+        if (won)
+            boardsWon.Add(board);
+
+        if (boardsWon.Count == boards.Count)
+            return board;
     }
+
     return null;
 }
