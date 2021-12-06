@@ -1,74 +1,62 @@
-﻿var boardsWon = new List<List<List<int?>>>();
-var input = File.ReadLines("4.txt");
+﻿var input = File.ReadLines("5.txt");
 
-var draws = input.First().Split(',').Select(int.Parse).ToList();
-
-var boards = input.Skip(1).Chunk(6)
-    .Select(lines => lines.Skip(1).Select(l => l.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).Cast<int?>().ToList()).ToList())
+var lines = input
+    .Select(l => System.Text.RegularExpressions.Regex.Match(l, @"(\d+),(\d+) -> (\d+),(\d+)"))
+    .Select(m => new {
+        x1 = int.Parse(m.Groups[1].Value),
+        y1 = int.Parse(m.Groups[2].Value),
+        x2 = int.Parse(m.Groups[3].Value),
+        y2 = int.Parse(m.Groups[4].Value),
+    })
     .ToList();
 
-var (winningNumber, winningBoard) = Play(draws, boards);
+var hvlines = lines
+    .Where(l => l.x1 == l.x2 || l.y1 == l.y2)
+    .ToList();
 
-var sum = 0;
-for (int y = 0; y < winningBoard.Count; y++)
+var maxX = lines.Max(l => Math.Max(l.x1, l.x2)) + 1;
+var maxY = lines.Max(l => Math.Max(l.y1, l.y2)) + 1;
+
+var world = new int[maxY*maxX];
+foreach (var l in lines)
 {
-    for (int x = 0; x < winningBoard[y].Count; x++)
-    {
-        sum += winningBoard[y][x] ?? 0;
-    }
-}
+    var startX = Math.Min(l.x1, l.x2);
+    var endX = l.x1 + l.x2 - startX;
+    var startY = Math.Min(l.y1, l.y2);
+    var endY = l.y1 + l.y2 - startY;
 
-Console.WriteLine(winningNumber);
-Console.WriteLine(sum);
-System.Console.WriteLine(sum * winningNumber);
 
-(int, List<List<int?>>) Play(List<int> draws, List<List<List<int?>>> boards)
-{
-    foreach (var number in draws)
+    if (startX == endX)
     {
-        EliminateNumber(number, boards);
-        var wonBoard = BoardWon();
-        if (wonBoard != null)
-            return (number, wonBoard);
-    }
-    throw new ArgumentException("Could not complete game");
-}
-
-void EliminateNumber(int number, List<List<List<int?>>> boards)
-{
-    foreach (var board in boards)
-    {
-        for (int y = 0; y < board.Count; y++)
+        for (int y = startY; y <= endY; y++)
         {
-            for (int x = 0; x < board[y].Count; x++)
-            {
-                if (board[y][x] == number)
-                    board[y][x] = null;
-            }
+            world[y * maxX + startX]++;
+        }
+    }
+    else if (startY == endY)
+    {
+        for (int x = startX; x <= endX; x++)
+        {
+            world[startY * maxX + x]++;
+        }
+    } else {
+
+        for (int y = startY, x = startX; y <= endY && x <= endX; y++, x++)
+        {
+            world[y * maxX + x]++;
         }
     }
 }
 
-List<List<int?>>? BoardWon()
+var result = world.Count(i => i > 1);
+
+for (int y = 0; y < maxY; y++)
 {
-    foreach (var board in boards.Except(boardsWon))
+    for (int x = 0; x < maxX; x++)
     {
-        var won = false;
-        for (int y = 0; y < board.Count; y++)
-        {
-            won |= board[y].All(x => x == null);
-        }
-        for (int x = 0; x < board[0].Count; x++)
-        {
-            won |= board.All(b => b[x] == null);
-        }
-
-        if (won)
-            boardsWon.Add(board);
-
-        if (boardsWon.Count == boards.Count)
-            return board;
+        Console.Write("{0} ", world[y * maxX + x]);
     }
-
-    return null;
+    System.Console.WriteLine();
 }
+
+System.Console.WriteLine(result);
