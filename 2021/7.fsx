@@ -11,7 +11,9 @@ let allFuels =
         let totalFuel =
             positions
             |> Seq.fold (fun acc v ->
-                acc + abs(v - i)
+                let steps = abs(v - i)
+                let fuel = (steps * (steps + 1)) / 2
+                acc + fuel
             ) 0
         (i, totalFuel)
     )
