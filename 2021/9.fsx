@@ -8,9 +8,9 @@ let heightmap =
 
 let lowest y x =
     let height = heightmap[y][x]
-    Seq.allPairs [-1;0;1] [-1;0;1]
+    Seq.zip [-1;1;0;0] [0;0;-1;1]
     |> Seq.map (fun (dy, dx) ->
-        printfn "(%i, %i)" (x+dx) (y+dy)
+        // printfn "(%i, %i)" (x+dx) (y+dy)
         (y+dy, x+dx)
     )
     |> Seq.filter (
@@ -19,54 +19,40 @@ let lowest y x =
         | _ -> true
     )
     |> Seq.map (fun (yy, xx) -> 
-        printfn "%i (%i,%i) is adjecent to (%i,%i)" (heightmap[yy][xx]) xx yy x y
+        // printfn "%i (%i,%i) is adjecent to (%i,%i)" (heightmap[yy][xx]) xx yy x y
         heightmap[yy][xx]
     )
-    |> Seq.exists (fun adjecentHeight -> adjecentHeight < height)
+    |> Seq.exists (fun adjecentHeight -> adjecentHeight <= height)
     |> not
-// let lowest y x =
-//     let height = heightmap[y][x]
-//     let asd =
-//         Seq.allPairs [-1;1] [-1;1]
-//         |> Seq.map (fun (dy, dx) -> (y+dy, x+dx))
-//         |> Seq.filter (
-//             function
-//             | (y, x) when y < 0 || x < 0 || y >= Seq.length heightmap || x >= Seq.length heightmap[0] -> false
-//             | _ -> false
-//         )
-//         |> Seq.map 
-
-//     let dxy = Seq.allPairs [-1;1] [-1;1]
-
-//     let adjecentLower =
-//         dxy
-//         |> Seq.map (fun (dy, dx) ->
-//             if y + dy < 0 || y + dy >= Seq.length heightmap then
-//                 false
-//             elif x + dx < 0 || x + dx >= Seq.length heightmap[0] then
-//                 false
-//             else
-//                 let adjecent = heightmap[y + dy][x + dx]
-//                 adjecent < height
-//         )
-//     let noOfLower =
-//         adjecentLower
-//         |> Seq.filter (fun b -> b)
-//         |> Seq.length
-//     noOfLower = 0
 
 let lowestHeights =
     let xy = Seq.allPairs [0..Seq.length heightmap - 1] [0..Seq.length heightmap[0] - 1]
-    ([], xy)
-    ||> Seq.fold (fun list (y, x) ->
+    
+    Seq.fold (fun list (y, x) ->
         if lowest y x then
-            printfn "%i (%i,%i) is lower than adjecents" (heightmap[y][x]) x y
-            list@[heightmap[y][x]]
+            // printfn "%i (%i,%i) is lower than adjecents" (heightmap[y][x]) x y
+            list@[((heightmap[y][x]), (x, y))]
         else
             list
-    )
+    ) [] xy
 
 let result1 =
     lowestHeights
-    |> List.map (fun x -> x + 1)
+    |> List.map (fun x -> fst x + 1)
     |> List.sum
+
+let getBasinSize (x, y) : int =
+    0
+
+let largestBasins =
+    lowestHeights
+    |> Seq.map snd
+    |> Seq.map getBasinSize
+    |> Seq.sortDescending
+    |> Seq.take 3
+
+let result2 =
+    largestBasins
+    |> Seq.fold (fun acc b -> acc * b) 1
+
+printfn "%A" result2
