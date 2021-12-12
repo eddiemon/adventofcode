@@ -1,74 +1,48 @@
-﻿var input = File.ReadLines("5.txt");
+﻿var input = File.ReadLines("12.txt");
 
-var lines = input
-    .Select(l => System.Text.RegularExpressions.Regex.Match(l, @"(\d+),(\d+) -> (\d+),(\d+)"))
-    .Select(m => new {
-        x1 = int.Parse(m.Groups[1].Value),
-        y1 = int.Parse(m.Groups[2].Value),
-        x2 = int.Parse(m.Groups[3].Value),
-        y2 = int.Parse(m.Groups[4].Value),
-    })
-    .ToList();
+var map = input.Select(s => s.Split('-'))
+    .GroupBy(l => l[0])
+    .ToDictionary(g => g.Key, g => g.Select(x => x[1]).ToHashSet());
 
-var maxX = lines.Max(l => Math.Max(l.x1, l.x2)) + 1;
-var maxY = lines.Max(l => Math.Max(l.y1, l.y2)) + 1;
-
-var world = new int[maxY*maxX];
-foreach (var l in lines)
-{
-    var xs = Range(l.x1, l.x2);
-    var ys = Range(l.y1, l.y2);
-    var coords = PadZip(xs, ys).ToList();
-    foreach (var (x,y) in coords)
+var keys = map.Keys.Except(new [] { "start"}).ToList();
+foreach (var key in keys)
+    foreach (var connection in map[key])
     {
-        world[y * maxX + x]++;
+        if (connection == "end") continue;
+        if (!map.ContainsKey(connection))
+            map[connection] = new HashSet<string>();
+        map[connection].Add(key);
     }
-}
 
-var result = world.Count(i => i > 1);
+var visitedPaths = new List<List<string>>();
+VisitNode("start", new Stack<string>());
+System.Console.WriteLine(visitedPaths.Count);
+// var s = visitedPaths.Select(p => string.Join(',', p)).ToList();
+// s.Sort(StringComparer.InvariantCulture);
 
-// for (int y = 0; y < maxY; y++)
+// foreach (var visitedPath in s)
 // {
-//     for (int x = 0; x < maxX; x++)
-//     {
-//         Console.Write("{0} ", world[y * maxX + x]);
-//     }
-//     System.Console.WriteLine();
+//     System.Console.WriteLine(visitedPath);
 // }
 
-System.Console.WriteLine(result);
+IEnumerable<string> SmallCaves(IEnumerable<string> caves) {
+    return caves.Where(c => c.ToLower() == c);
+}
 
-IEnumerable<int> Range(int start, int end)
-{
-    if (start <= end)
+void VisitNode(string node, Stack<string> visited) {
+    visited.Push(node);
+    if (node == "end")
     {
-        for (int i = start; i <= end; i++)
-            yield return i;
+        visitedPaths.Add(visited.Reverse().ToList());
     }
     else
     {
-        for (int i = start; i >= end; i--)
-            yield return i;
+        var adjecentCaves = map[node];
+        var adjecentCavesWithoutVisitedSmallCaves = adjecentCaves.Except(SmallCaves(visited));
+        foreach (var adjecentCave in adjecentCavesWithoutVisitedSmallCaves)
+        {
+            VisitNode(adjecentCave, visited);
+        }
     }
-}
-
-IEnumerable<(int, int)> PadZip(IEnumerable<int> a, IEnumerable<int> b) {
-    var enumA = a.GetEnumerator();
-    var enumB = b.GetEnumerator();
-    var currentA = 0;
-    var currentB = 0;
-    var hasMore = true;
-    do
-    {
-        var hasMoreA = enumA.MoveNext();
-        if (hasMoreA)
-            currentA = enumA.Current;
-        var hasMoreB = enumB.MoveNext();
-        if (hasMoreB)
-            currentB = enumB.Current;
-        hasMore = hasMoreA || hasMoreB;
-        if (!hasMore)
-            break;
-        yield return (currentA, currentB);
-    } while (true);
+    visited.Pop();
 }
