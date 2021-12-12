@@ -93,10 +93,38 @@ let step (world: World) : World =
     resetFlashed world
     world
 
-let world = initialWorld()
-for i in 1..100 do
-    step world
-    |> ignore
+let iterateWhile predicate =
+    let mutable i = 0
+    seq {
+        while predicate() do
+            i <- i + 1
+            yield i
+    }
 
-printWorld world
-printfn "flashes %i" world.NoOfFlashes
+// let mutable steps = 0
+// for i in iterateWhile (fun () -> steps < 5) do
+//     steps <-
+//         match true with
+//         | true -> steps + 1
+//         | false -> 0
+//     printfn "step: %i" steps
+
+let world = initialWorld()
+let mutable theStep = -1
+let size = (world.MaxX + 1) * (world.MaxY + 1)
+let mutable continue = true
+for i in (iterateWhile(fun () -> continue)) do
+    printfn "step no: %i " i
+    let flashes = world.NoOfFlashes
+    step world |> ignore
+    continue <-
+        match (world.NoOfFlashes - flashes) with
+        | 100 -> theStep <- i; false
+        | _ -> true
+
+printfn "step = %i" theStep
+
+// printWorld world
+// printfn "flashes %i" world.NoOfFlashes
+
+// printfn "%A" (step (step (step (initialWorld()))))
