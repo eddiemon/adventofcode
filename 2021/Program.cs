@@ -1,59 +1,42 @@
-﻿var input = File.ReadLines("12.txt");
+﻿var input = File.ReadLines("15.txt");
 
-var map = input.Select(s => s.Split('-'))
-    .GroupBy(l => l[0])
-    .ToDictionary(g => g.Key, g => g.Select(x => x[1]).ToHashSet());
+var cost = new Dictionary<(int x, int y), int> {
+    [(0,0)] = 1,
+    [(1,0)] = 1,
+    [(0,1)] = 2,
+    [(1,1)] = 1,
+};
 
-var keys = map.Keys.Except(new [] { "start"}).ToList();
-foreach (var key in keys)
-    foreach (var connection in map[key])
+var maxX = cost.Keys.MaxBy(k => k.x).x;
+var maxY = cost.Keys.MaxBy(k => k.y).y;
+
+var dist = cost.Keys.ToDictionary(k => k, _ => int.MaxValue);
+var prev = cost.Keys.ToDictionary(k => k, _ => ((int,int)?) null);
+dist[(0,0)] = 0;
+
+var q = new PriorityQueue<(int x, int y), int>();
+q.Enqueue((0,0), 0);
+
+var neighboursDelta = new List<(int x, int y)> {
+    (-1,1),(0,1),(1, 1),
+    (-1,0),      (1, 0),
+    ( 1,1),(1,1),(1,-1),
+};
+
+while (q.Count > 0) {
+    var u = q.Dequeue();
+    var neighbours = neighboursDelta
+        .Select(nd => (x: u.x + nd.x, y: u.y + nd.y))
+        .Where(n => n.x >= 0 && n.x <= maxX && n.y >= 0 && n.y <= maxY)
+        .ToList();
+
+    foreach (var v in neighbours)
     {
-        if (connection == "end") continue;
-        if (!map.ContainsKey(connection))
-            map[connection] = new HashSet<string>();
-        map[connection].Add(key);
-    }
-
-var visitedPaths = new List<List<string>>();
-VisitNode("start", new Stack<string>());
-System.Console.WriteLine(visitedPaths.Count);
-// foreach (var s in visitedPaths.Select(p => string.Join(',', p)))
-// {
-//     System.Console.WriteLine(s);
-// }
-
-IEnumerable<string> SmallCaves(IEnumerable<string> caves) {
-    return caves.Where(c => c.ToLower() == c);
-}
-
-IEnumerable<string> VisitableCaves(IEnumerable<string> adjecent, IEnumerable<string> visited) {
-    var g = visited.Except(new[] { "start" }).Distinct().Select(
-        v => new { Node = v, Count = visited.Count(vv => vv == v)}
-    );
-
-    var excludeList = new List<string> { "start" };
-    var smallCaveVisitedTwice = g.Where(kvp => kvp.Node.ToLower() == kvp.Node && kvp.Count > 1).SingleOrDefault()?.Node;
-    if (smallCaveVisitedTwice != null)
-    {
-        excludeList.AddRange(g.Where(gg => gg.Node.ToLower() == gg.Node).Select(gg => gg.Node));
-    }
-    return adjecent.Except(excludeList);
-}
-
-void VisitNode(string node, Stack<string> visited) {
-    visited.Push(node);;
-    if (node == "end")
-    {
-        visitedPaths.Add(visited.Reverse().ToList());
-    }
-    else
-    {
-        var adjecentCaves = map[node];
-        var visitableAdjecentCaves = VisitableCaves(adjecentCaves, visited).ToList();
-        foreach (var adjecentCave in visitableAdjecentCaves)
-        {
-            VisitNode(adjecentCave, visited);
+        var alt = dist[u] + cost[v];
+        if (alt < dist[v]) {
+            dist[v] = alt;
+            prev[v] = u;
+            if (!q.Contains(v))
         }
     }
-    visited.Pop();
 }
