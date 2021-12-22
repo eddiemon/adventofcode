@@ -12,7 +12,7 @@ type Cuboid = {
 }
 
 type Cube = int*int*int
-type World = Map<Cube, CubeState>
+type World = System.Collections.Generic.Dictionary<Cube, CubeState> //Map<Cube, CubeState>
 
 let parse line: Cuboid =
     let matches = System.Text.RegularExpressions.Regex("^(?<state>on|off) x=(?<xstart>-?\\d+)..(?<xend>-?\\d+),y=(?<ystart>-?\\d+)..(?<yend>-?\\d+),z=(?<zstart>-?\\d+)..(?<zend>-?\\d+)$").Match(line)
@@ -30,14 +30,14 @@ let parse line: Cuboid =
         Z = seq { for z in zstart..zend do yield z}
     }
 
-let applyInstruction world instruction =
+let applyInstruction (world: World) instruction =
     [for z in instruction.Z do
         for y in instruction.Y do
             for x in instruction.X -> (x,y,z)]
-    |> Seq.fold (fun world coord ->
+    |> Seq.fold (fun (world: World) coord ->
         match instruction.SetState with
-        | On -> Map.add coord instruction.SetState world
-        | Off -> Map.remove coord world
+        | On -> world.[coord] <- instruction.SetState; world
+        | Off -> world.Remove(coord) |> ignore; world
     ) world
 
 let filterInRegion (x: seq<int>) (y: seq<int>) (z: seq<int>) instruction =
@@ -52,6 +52,6 @@ let filter = Seq.filter (filterInRegion [-50..50] [-50..50] [-50..50])
 
 let instructions = input |> Seq.map parse
 
-let world = instructions |> filter |> Seq.fold applyInstruction Map.empty
+let world = instructions |> filter |> Seq.fold applyInstruction (World())
 
-world |> Map.count
+world.Count

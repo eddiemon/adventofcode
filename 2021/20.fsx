@@ -91,6 +91,6 @@ let state = {
     InfinitePixelValue = 0
 }
 
-let result = enhanceNTimes state 2
+let result = enhanceNTimes state 50
 
 result.Image.Values |> Seq.filter (fun v -> v = 1) |> Seq.length
