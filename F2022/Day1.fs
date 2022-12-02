@@ -4,7 +4,7 @@ open System
 open Xunit
 open Xunit.Abstractions
 
-let text = System.IO.File.ReadAllText("../../../day1.txt")
+let text = System.IO.File.ReadAllText("../../../1.txt")
 
 let caloriesPerElf =
     text.Split("\n\n")
