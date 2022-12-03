@@ -24,6 +24,7 @@
     <ItemGroup>
       <Compile Include="Day3.fs" />
       <Content Include="3.in" />
+      <Compile Include="Day4.fs" />
     </ItemGroup>
 
 </Project>
