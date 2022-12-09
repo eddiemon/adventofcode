@@ -122,4 +122,59 @@ type Tests(output: ITestOutputHelper) =
     [<InlineData("input")>]
     let ``Part 2`` (inputType) =
         let input = parseInput inputType
-        write ""
+        let size = Array.length input
+        let treeHeights =
+            input
+            |> Array.collect id
+            |> dict
+            
+        let getHorizontalScenicScore height y xs =
+            xs
+            |> Seq.fold (fun (maxHeight, list) x ->
+                let height' = treeHeights[(x, y)]
+                if maxHeight < height then
+                    (height', x :: list)
+                else
+                    (height, list)
+            ) (0, [])
+            |> snd
+            |> Seq.length
+            
+        let getVerticalScenicScore height x ys =
+            ys
+            |> Seq.fold (fun (maxHeight, list) y ->
+                let height' = treeHeights[(x, y)]
+                if maxHeight < height then
+                    (height', y :: list)
+                else
+                    (height, list)
+            ) (0, [])
+            |> snd
+            |> Seq.length
+
+        let highestScenicScore =
+            treeHeights
+            |> Seq.map (fun kvp ->
+                let (x,y) = kvp.Key
+                let height = kvp.Value
+                let leftScore =
+                    seq { x - 1 .. -1 .. 0}
+                    |> getHorizontalScenicScore height y
+
+                let rightScore =
+                    seq { x + 1 .. 1 .. size - 1}
+                    |> getHorizontalScenicScore height y
+                    
+                let upScore =
+                    seq { y - 1 .. -1 .. 0}
+                    |> getVerticalScenicScore height x
+                    
+                let downScore =
+                    seq { y + 1 .. 1 .. size - 1}
+                    |> getVerticalScenicScore height x
+                leftScore * rightScore * upScore * downScore
+            )
+            |> Seq.max
+        
+        
+        write highestScenicScore
