@@ -36,34 +36,28 @@ abdefghi"""
         |> dict
         
     let shortestPath startNode endNode (nodes:IDictionary<(int*int),char>) =
-        let unvisited = HashSet(nodes.Keys)
-        let tentativeDistance =
-            nodes.Keys |> Seq.map (fun n -> KeyValuePair(n, Int32.MaxValue)) |> fun vs -> Dictionary(vs)
+        let q = PriorityQueue<int*int, int64>()
+        let distances = Dictionary<int*int, int64>()
+        distances.Add(startNode, 0)
+        q.Enqueue(startNode, 0)
         
-        tentativeDistance[startNode] <- 0
-        
-        while unvisited.Contains(endNode) do
-            let nextNode =
-                tentativeDistance
-                |> Seq.filter (fun kvp -> unvisited.Contains(kvp.Key))
-                |> Seq.sortBy (fun kvp -> kvp.Value)
-                |> Seq.head
-            let currentNode = nextNode.Key
-            let currentDistance = nextNode.Value + 1
+        while q.Count > 0 do
+            let currentNode = q.Dequeue()
+            let currentDistance = distances[currentNode] + 1L
             
             let neighbours =
                 [|(-1, 0); (1, 0); (0, -1); (0, 1)|]
                 |> Array.map (fun (dx,dy) -> (fst currentNode + dx, snd currentNode + dy))
-                |> Array.filter (fun p -> unvisited.Contains(p) && ((height nodes[p]) - (height nodes[currentNode])) <= 1)
+                |> Array.filter (fun p -> nodes.ContainsKey(p) && ((height nodes[p]) - (height nodes[currentNode])) <= 1)
 
             for n in neighbours do
-                let distance = tentativeDistance[n]
+                let distance = if distances.ContainsKey(n) then distances[n] else Int64.MaxValue
                 if currentDistance < distance then
-                    tentativeDistance[n] <- currentDistance
+                    distances[n] <- currentDistance
+                    q.Enqueue(n, currentDistance)
                 else
                     ()
-            unvisited.Remove(currentNode) |> ignore
-        tentativeDistance.Item endNode
+        if distances.ContainsKey(endNode) then distances[endNode] else Int64.MaxValue
 
     [<Theory>]
     [<InlineData("example")>]
