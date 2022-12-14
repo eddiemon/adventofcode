@@ -117,4 +117,14 @@ type Tests(output: ITestOutputHelper) =
     [<InlineData("input")>]
     let ``Part 2`` (inputType) =
         let input = parseInput inputType
-        write ""
+        
+        let decoderKey =
+            input
+            |> Array.append [|{Id = -1; Left=Subpacket [Subpacket [Integer 2]];Right=Subpacket [Subpacket [Integer 6]]}|]
+            |> Array.collect (fun p -> [|p.Left;p.Right|])
+            |> Array.sortWith compare
+            |> Array.mapi (fun i x -> (i+1,x))
+            |> Array.filter (fun (_,x) -> (x = Subpacket [Subpacket [Integer 2]]) || (x = Subpacket [Subpacket [Integer 6]]))
+            |> Array.map (fun (i,_) -> i)
+            |> Array.reduce (*)
+        write decoderKey
