@@ -17,6 +17,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "F2018", "F2018\F2018.fsproj
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "F2022", "F2022\F2022.fsproj", "{64D973D1-2C48-4FBA-A491-3AE9839F4EFF}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "F2023", "F2023\F2023.fsproj", "{BFEE9440-B455-482B-A5D4-976056A5FE07}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,18 @@ Global
 		{64D973D1-2C48-4FBA-A491-3AE9839F4EFF}.Release|x64.Build.0 = Release|Any CPU
 		{64D973D1-2C48-4FBA-A491-3AE9839F4EFF}.Release|x86.ActiveCfg = Release|Any CPU
 		{64D973D1-2C48-4FBA-A491-3AE9839F4EFF}.Release|x86.Build.0 = Release|Any CPU
+		{BFEE9440-B455-482B-A5D4-976056A5FE07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFEE9440-B455-482B-A5D4-976056A5FE07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFEE9440-B455-482B-A5D4-976056A5FE07}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BFEE9440-B455-482B-A5D4-976056A5FE07}.Debug|x64.Build.0 = Debug|Any CPU
+		{BFEE9440-B455-482B-A5D4-976056A5FE07}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BFEE9440-B455-482B-A5D4-976056A5FE07}.Debug|x86.Build.0 = Debug|Any CPU
+		{BFEE9440-B455-482B-A5D4-976056A5FE07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFEE9440-B455-482B-A5D4-976056A5FE07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFEE9440-B455-482B-A5D4-976056A5FE07}.Release|x64.ActiveCfg = Release|Any CPU
+		{BFEE9440-B455-482B-A5D4-976056A5FE07}.Release|x64.Build.0 = Release|Any CPU
+		{BFEE9440-B455-482B-A5D4-976056A5FE07}.Release|x86.ActiveCfg = Release|Any CPU
+		{BFEE9440-B455-482B-A5D4-976056A5FE07}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
